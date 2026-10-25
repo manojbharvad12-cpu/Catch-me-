@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Block Blast Pro</title>
+  <title>Block Blast Adventure Master</title>
   <style>
     * {
       box-sizing: border-box;
@@ -12,71 +12,80 @@
       user-select: none;
       -webkit-user-select: none;
       touch-action: none;
-      font-family: 'Segoe UI', Tahoma, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
     body {
-      background: #1e252b;
+      background: #2b3035;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
-      padding: 20px 14px;
+      padding: 12px 10px 20px 10px;
       overflow: hidden;
     }
 
-    .top-nav {
+    /* TOP BAR */
+    .top-bar {
       width: 100%;
       max-width: 360px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      height: 48px;
     }
 
-    .hs-tag {
-      color: #ffd166;
-      font-size: 20px;
-      font-weight: 800;
+    .hs-box {
+      color: #ffb703;
+      font-size: 22px;
+      font-weight: 900;
       display: flex;
       align-items: center;
       gap: 6px;
     }
 
-    .btn-hub {
-      background: #334155;
+    .gear-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
       border: none;
-      color: white;
-      padding: 6px 14px;
-      border-radius: 12px;
-      font-weight: 800;
+      color: #fff;
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
     }
 
-    .score-banner {
+    .gear-btn:active { transform: scale(0.92); }
+
+    .current-score {
       font-size: 52px;
       font-weight: 900;
-      color: #2ec4b6;
-      text-shadow: 0 4px 12px rgba(46, 196, 182, 0.4);
-      margin: 10px 0;
+      color: #72efdd;
+      text-shadow: 0 4px 14px rgba(114, 239, 221, 0.4);
+      margin-top: -6px;
     }
 
-    .grid-board {
+    /* 8x8 GRID CONTAINER */
+    .board-wrapper {
       width: 336px;
       height: 336px;
-      background: #14181c;
-      border: 3px solid #333d47;
-      border-radius: 14px;
+      background: #1f2326;
+      border: 3px solid #3a4146;
+      border-radius: 12px;
       display: grid;
       grid-template-columns: repeat(8, 1fr);
       grid-template-rows: repeat(8, 1fr);
       gap: 3px;
       padding: 4px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.5);
     }
 
     .grid-cell {
-      background: #252d35;
+      background: #2d3339;
       border-radius: 4px;
       transition: background 0.08s;
     }
@@ -92,25 +101,26 @@
     }
 
     .grid-cell.clearing {
-      animation: blastFx 0.3s forwards;
+      animation: blastAnim 0.3s forwards;
     }
 
-    @keyframes blastFx {
+    @keyframes blastAnim {
       0% { transform: scale(1); background: #ffffff; }
       50% { transform: scale(1.15); background: #70e000; }
       100% { transform: scale(0); opacity: 0; }
     }
 
-    .dock-holder {
+    /* BOTTOM DOCK AREA (Center-Aligned) */
+    .dock-wrapper {
       width: 100%;
       max-width: 360px;
-      height: 120px;
+      height: 125px;
       display: flex;
       justify-content: space-around;
       align-items: center;
-      background: rgba(20, 24, 28, 0.4);
-      border-radius: 16px;
-      padding: 10px;
+      background: rgba(20, 24, 28, 0.45);
+      border-radius: 18px;
+      padding: 8px;
     }
 
     .dock-slot {
@@ -136,7 +146,8 @@
       box-shadow: inset 1px 1px 2px rgba(255,255,255,0.5);
     }
 
-    #dragGhost {
+    /* DRAG FLOATING PREVIEW */
+    #floatingDrag {
       position: fixed;
       pointer-events: none;
       display: none;
@@ -144,53 +155,210 @@
       transform: translate(-50%, -50%);
     }
 
-    #dragGhost .block-unit {
+    #floatingDrag .block-unit {
       width: 38px;
       height: 38px;
     }
 
-    #dragGhost .draggable-shape {
+    #floatingDrag .draggable-shape {
       gap: 3px;
+    }
+
+    /* SETTINGS MODAL OVERLAY (Screenshot Style) */
+    .settings-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+
+    .settings-modal.active { display: flex; }
+
+    .settings-card {
+      width: 310px;
+      background: #4a545e;
+      border: 3px solid #737f8d;
+      border-radius: 28px;
+      padding: 24px 18px 20px 18px;
+      position: relative;
+      color: #fff;
+      box-shadow: 0 16px 35px rgba(0,0,0,0.6);
+      text-align: center;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #363e46;
+      border: none;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .settings-title {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      margin-bottom: 22px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
+
+    .toggle-row {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+    }
+
+    .toggle-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .toggle-box {
+      width: 65px;
+      height: 65px;
+      background: #363e46;
+      border-radius: 18px;
+      border: 2px solid #5a6673;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    .toggle-box.active {
+      border-color: #2ec4b6;
+      background: #25444a;
+    }
+
+    .toggle-lbl {
+      font-size: 13px;
+      font-weight: 700;
+      color: #e2e8f0;
+    }
+
+    .modal-menu-btn {
+      width: 100%;
+      height: 54px;
+      background: linear-gradient(180deg, #38d629 0%, #1a9e0f 100%);
+      border: 2px solid #7bf06f;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+      font-size: 18px;
+      font-weight: 900;
+      color: #fff;
+      box-shadow: 0 6px 0 #11680a, 0 10px 16px rgba(0,0,0,0.35);
+      cursor: pointer;
+      margin-bottom: 14px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
+
+    .modal-menu-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 3px 0 #11680a;
+    }
+
+    .modal-menu-btn.settings-sub {
+      background: linear-gradient(180deg, #25c025 0%, #16930d 100%);
     }
   </style>
 </head>
 <body>
 
-  <div class="top-nav">
-    <div class="hs-tag">👑 <span id="hsTxt">0</span></div>
-    <button class="btn-hub" onclick="location.href='index.html'">❮ Menu</button>
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="hs-box">👑 <span id="hsTxt">0</span></div>
+    <button class="gear-btn" onclick="openSettings()">⚙️</button>
   </div>
 
-  <div class="score-banner" id="scoreTxt">0</div>
+  <div class="current-score" id="scoreTxt">0</div>
 
-  <div class="grid-board" id="gameBoard"></div>
+  <!-- 8x8 BOARD -->
+  <div class="board-wrapper" id="gameBoard"></div>
 
-  <div class="dock-holder" id="dock"></div>
+  <!-- DOCK AREA -->
+  <div class="dock-wrapper" id="dockHolder"></div>
 
-  <div id="dragGhost"></div>
+  <!-- FLOATING DRAG GHOST -->
+  <div id="floatingDrag"></div>
+
+  <!-- SETTINGS MODAL (Screenshot Style) -->
+  <div class="settings-modal" id="settingsModal">
+    <div class="settings-card">
+      <button class="close-btn" onclick="closeSettings()">✕</button>
+      <div class="settings-title">Settings</div>
+
+      <div class="toggle-row">
+        <div class="toggle-item" onclick="toggleSound()">
+          <div class="toggle-box active" id="soundBox">🔊</div>
+          <div class="toggle-lbl">Sound</div>
+        </div>
+        <div class="toggle-item" onclick="toggleBGM()">
+          <div class="toggle-box active" id="bgmBox">🎵</div>
+          <div class="toggle-lbl">BGM</div>
+        </div>
+      </div>
+
+      <!-- SEPARATE FILE REDIRECTS -->
+      <button class="modal-menu-btn" onclick="location.href='achievements.html'">
+        <span>🎖️</span> Medal
+      </button>
+      <button class="modal-menu-btn settings-sub" onclick="location.href='settings.html'">
+        <span>⚙️</span> More Settings
+      </button>
+    </div>
+  </div>
 
   <script>
+    // AUDIO ENGINE
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let isSoundOn = localStorage.getItem('bb_sound') !== 'false';
+    let isBgmOn = localStorage.getItem('bb_bgm') !== 'false';
+
+    function playTone(freq, type = 'sine', duration = 0.08) {
+      if (!isSoundOn) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch(e){}
+    }
+
+    // GAME STATE
     let grid = Array(8).fill(null).map(() => Array(8).fill(0));
     let score = 0;
-    let highScore = parseInt(localStorage.getItem('bb_pro_hs')) || 0;
+    let highScore = parseInt(localStorage.getItem('bb_user_highscore')) || 0;
     let dockItems = [null, null, null];
 
-    // EASY SHAPES (Player ne high-score sudhi jaldi lai java mate)
     const EASY_SHAPES = [
-      [[1]], // 1x1
-      [[1,1]], // 1x2
-      [[1],[1]], // 2x1
-      [[1,1,1]], // 1x3
-      [[1],[1],[1]], // 3x1
-      [[1,1],[1,1]] // 2x2
+      [[1]], [[1,1]], [[1],[1]], [[1,1,1]], [[1],[1],[1]], [[1,1],[1,1]]
     ];
-
-    // CHALLENGE SHAPES (High score pachhi player ne rokva ane challenge aapva mate)
     const HARD_SHAPES = [
-      [[1,1,1,1]], // 4-line
-      [[1,0],[1,0],[1,1]], // L shape
-      [[1,1,1],[0,1,0]], // T shape
-      [[1,1,1],[1,1,1],[1,1,1]] // 3x3 big
+      [[1,1,1,1]], [[1,0],[1,0],[1,1]], [[1,1,1],[0,1,0]], [[1,1,1],[1,1,1],[1,1,1]]
     ];
 
     document.getElementById('hsTxt').innerText = highScore;
@@ -198,8 +366,8 @@
     function initBoard() {
       const b = document.getElementById('gameBoard');
       b.innerHTML = '';
-      for(let r=0; r<8; r++) {
-        for(let c=0; c<8; c++) {
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
           const cell = document.createElement('div');
           cell.className = 'grid-cell';
           cell.dataset.r = r;
@@ -212,12 +380,9 @@
     initBoard();
 
     function spawnDock() {
-      for(let i=0; i<3; i++) {
-        // SMART LOGIC:
-        // Jo score high score thi niche hoy, to 80% Easy shapes aavse (fast high score pochase)
-        // High score paar karta 50% Challenge shapes aavse (puzzle interesting thase)
-        if(score < highScore || highScore === 0) {
-          dockItems[i] = (Math.random() < 0.85) 
+      for (let i = 0; i < 3; i++) {
+        if (score < highScore || highScore === 0) {
+          dockItems[i] = (Math.random() < 0.85)
             ? EASY_SHAPES[Math.floor(Math.random() * EASY_SHAPES.length)]
             : HARD_SHAPES[Math.floor(Math.random() * HARD_SHAPES.length)];
         } else {
@@ -230,12 +395,12 @@
     }
 
     function renderDock() {
-      const d = document.getElementById('dock');
+      const d = document.getElementById('dockHolder');
       d.innerHTML = '';
       dockItems.forEach((shape, idx) => {
         const slot = document.createElement('div');
         slot.className = 'dock-slot';
-        if(shape) {
+        if (shape) {
           const el = buildShapeEl(shape, 22);
           bindDrag(el, idx, shape);
           slot.appendChild(el);
@@ -251,7 +416,7 @@
       matrix.forEach(row => {
         row.forEach(val => {
           const u = document.createElement('div');
-          if(val) {
+          if (val) {
             u.className = 'block-unit';
             u.style.width = size + 'px';
             u.style.height = size + 'px';
@@ -265,46 +430,47 @@
       return wrap;
     }
 
-    // ACCURATE DRAG SYSTEM
+    // ACCURATE TOUCH & DRAG
     let dragIdx = null;
     let dragShape = null;
-    const ghost = document.getElementById('dragGhost');
-    const OFFSET_Y = 65;
+    const floating = document.getElementById('floatingDrag');
+    const DRAG_OFFSET_Y = 65;
 
     function bindDrag(el, idx, matrix) {
       el.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         dragIdx = idx;
         dragShape = matrix;
-        ghost.innerHTML = '';
-        ghost.appendChild(buildShapeEl(matrix, 38));
-        ghost.style.display = 'block';
-        moveGhost(e.clientX, e.clientY - OFFSET_Y);
+        floating.innerHTML = '';
+        floating.appendChild(buildShapeEl(matrix, 38));
+        floating.style.display = 'block';
+        updateFloatingPos(e.clientX, e.clientY - DRAG_OFFSET_Y);
         el.style.opacity = '0';
+        playTone(450);
       });
     }
 
     window.addEventListener('pointermove', (e) => {
-      if(dragIdx === null) return;
-      const y = e.clientY - OFFSET_Y;
-      moveGhost(e.clientX, y);
+      if (dragIdx === null) return;
+      const y = e.clientY - DRAG_OFFSET_Y;
+      updateFloatingPos(e.clientX, y);
       showHover(e.clientX, y);
     });
 
     window.addEventListener('pointerup', (e) => {
-      if(dragIdx === null) return;
-      const y = e.clientY - OFFSET_Y;
+      if (dragIdx === null) return;
+      const y = e.clientY - DRAG_OFFSET_Y;
       placeBlock(e.clientX, y);
-      ghost.style.display = 'none';
+      floating.style.display = 'none';
       clearHover();
       dragIdx = null;
       dragShape = null;
       renderDock();
     });
 
-    function moveGhost(x, y) {
-      ghost.style.left = x + 'px';
-      ghost.style.top = y + 'px';
+    function updateFloatingPos(x, y) {
+      floating.style.left = x + 'px';
+      floating.style.top = y + 'px';
     }
 
     function getCoords(x, y) {
@@ -320,10 +486,10 @@
     }
 
     function canFit(matrix, r, c) {
-      if(r < 0 || c < 0 || r + matrix.length > 8 || c + matrix[0].length > 8) return false;
-      for(let i=0; i<matrix.length; i++) {
-        for(let j=0; j<matrix[0].length; j++) {
-          if(matrix[i][j] && grid[r+i][c+j] === 1) return false;
+      if (r < 0 || c < 0 || r + matrix.length > 8 || c + matrix[0].length > 8) return false;
+      for (let i = 0; i < matrix.length; i++) {
+        for (let j = 0; j < matrix[0].length; j++) {
+          if (matrix[i][j] && grid[r + i][c + j] === 1) return false;
         }
       }
       return true;
@@ -332,12 +498,12 @@
     function showHover(x, y) {
       clearHover();
       const { r, c } = getCoords(x, y);
-      if(canFit(dragShape, r, c)) {
-        for(let i=0; i<dragShape.length; i++) {
-          for(let j=0; j<dragShape[0].length; j++) {
-            if(dragShape[i][j]) {
+      if (canFit(dragShape, r, c)) {
+        for (let i = 0; i < dragShape.length; i++) {
+          for (let j = 0; j < dragShape[0].length; j++) {
+            if (dragShape[i][j]) {
               const cell = document.querySelector(`.grid-cell[data-r='${r+i}'][data-c='${c+j}']`);
-              if(cell) cell.classList.add('preview-hover');
+              if (cell) cell.classList.add('preview-hover');
             }
           }
         }
@@ -350,12 +516,12 @@
 
     function placeBlock(x, y) {
       const { r, c } = getCoords(x, y);
-      if(canFit(dragShape, r, c)) {
+      if (canFit(dragShape, r, c)) {
         let placed = 0;
-        for(let i=0; i<dragShape.length; i++) {
-          for(let j=0; j<dragShape[0].length; j++) {
-            if(dragShape[i][j]) {
-              grid[r+i][c+j] = 1;
+        for (let i = 0; i < dragShape.length; i++) {
+          for (let j = 0; j < dragShape[0].length; j++) {
+            if (dragShape[i][j]) {
+              grid[r + i][c + j] = 1;
               placed++;
             }
           }
@@ -363,10 +529,11 @@
         dockItems[dragIdx] = null;
         score += placed * 10;
         updateScore();
+        playTone(320);
         renderGrid();
         clearLines();
 
-        if(dockItems.every(s => s === null)) spawnDock();
+        if (dockItems.every(s => s === null)) spawnDock();
       }
     }
 
@@ -374,24 +541,25 @@
       document.querySelectorAll('.grid-cell').forEach(c => {
         const r = parseInt(c.dataset.r);
         const col = parseInt(c.dataset.c);
-        if(grid[r][col] === 1) c.classList.add('filled');
+        if (grid[r][col] === 1) c.classList.add('filled');
         else c.classList.remove('filled');
       });
     }
 
     function clearLines() {
       let rClear = [], cClear = [];
-      for(let r=0; r<8; r++) { if(grid[r].every(v => v === 1)) rClear.push(r); }
-      for(let c=0; c<8; c++) {
+      for (let r = 0; r < 8; r++) { if (grid[r].every(v => v === 1)) rClear.push(r); }
+      for (let c = 0; c < 8; c++) {
         let fl = true;
-        for(let r=0; r<8; r++) { if(grid[r][c] === 0) { fl = false; break; } }
-        if(fl) cClear.push(c);
+        for (let r = 0; r < 8; r++) { if (grid[r][c] === 0) { fl = false; break; } }
+        if (fl) cClear.push(c);
       }
 
-      if(rClear.length + cClear.length > 0) {
+      if (rClear.length + cClear.length > 0) {
         rClear.forEach(r => grid[r].fill(0));
-        cClear.forEach(c => { for(let r=0; r<8; r++) grid[r][c] = 0; });
+        cClear.forEach(c => { for (let r = 0; r < 8; r++) grid[r][c] = 0; });
         score += (rClear.length + cClear.length) * 120;
+        playTone(650, 'triangle', 0.25);
         updateScore();
         setTimeout(renderGrid, 200);
       }
@@ -399,11 +567,34 @@
 
     function updateScore() {
       document.getElementById('scoreTxt').innerText = score;
-      if(score > highScore) {
+      if (score > highScore) {
         highScore = score;
-        localStorage.setItem('bb_pro_hs', highScore);
+        localStorage.setItem('bb_user_highscore', highScore);
         document.getElementById('hsTxt').innerText = highScore;
       }
+    }
+
+    // SETTINGS MODAL LOGIC
+    function openSettings() {
+      document.getElementById('settingsModal').classList.add('active');
+      document.getElementById('soundBox').innerText = isSoundOn ? '🔊' : '🔇';
+      document.getElementById('bgmBox').innerText = isBgmOn ? '🎵' : '🔇';
+    }
+
+    function closeSettings() {
+      document.getElementById('settingsModal').classList.remove('active');
+    }
+
+    function toggleSound() {
+      isSoundOn = !isSoundOn;
+      localStorage.setItem('bb_sound', isSoundOn);
+      document.getElementById('soundBox').innerText = isSoundOn ? '🔊' : '🔇';
+    }
+
+    function toggleBGM() {
+      isBgmOn = !isBgmOn;
+      localStorage.setItem('bb_bgm', isBgmOn);
+      document.getElementById('bgmBox').innerText = isBgmOn ? '🎵' : '🔇';
     }
   </script>
 </body>
