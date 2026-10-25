@@ -160,7 +160,6 @@
       background: #475569;
     }
 
-    /* Modal */
     .modal {
       display: none;
       position: fixed;
@@ -241,7 +240,7 @@
     
     let boardState = ["", "", "", "", "", "", "", "", ""];
     let isGameActive = true;
-    let roundResult = null; // 'win', 'lose', 'draw'
+    let roundResult = null;
 
     const WIN_COMBOS = [
       [0, 1, 2], [3, 4, 5], [6, 7, 8],
@@ -272,7 +271,6 @@
 
       if (boardState[idx] !== "" || !isGameActive) return;
 
-      // Player move (X)
       makeMove(idx, "X");
 
       if (checkWin("X")) {
@@ -285,7 +283,6 @@
         return;
       }
 
-      // AI move
       isGameActive = false;
       statusBar.innerText = "Computer vichare chhe...";
       setTimeout(makeAIMove, 450);
@@ -298,7 +295,6 @@
       cell.classList.add(symbol.toLowerCase());
     }
 
-    // AI Logic (Levels pramane Difficulty vadhashe)
     function makeAIMove() {
       let emptyIndices = [];
       boardState.forEach((val, idx) => {
@@ -309,37 +305,52 @@
 
       let chosenIndex = null;
 
-      // Level 1: Pure Random (Sauthi saral)
-      if (currentLevel === 1) {
-        chosenIndex = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
-      } 
-      // Level 2 to 4: Thodu smart (Jo potano win hase to leshe, baki 50% player ne block karse)
-      else if (currentLevel >= 2 && currentLevel <= 4) {
-        chosenIndex = findWinningMove("O"); // Potano win check
-        if (chosenIndex === null && Math.random() < 0.6) {
-          chosenIndex = findWinningMove("X"); // Player no win block
+      // 1. Check if AI can win immediately
+      chosenIndex = findWinningMove("O");
+
+      // 2. 100% Mandatory Block: Stop Player from winning
+      if (chosenIndex === null) {
+        let blockMove = findWinningMove("X");
+        if (blockMove !== null) {
+          if (currentLevel === 1 && Math.random() < 0.4) {
+            chosenIndex = null; // Only slight mercy on Level 1
+          } else {
+            chosenIndex = blockMove; // Solid block!
+          }
         }
-        if (chosenIndex === null) {
+      }
+
+      // 3. Positional Strategy
+      if (chosenIndex === null) {
+        if (currentLevel === 1) {
           chosenIndex = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
-        }
-      } 
-      // Level 5 thi aagal: Smart Blocking pan beatable
-      else {
-        chosenIndex = findWinningMove("O"); // Win priority
-        if (chosenIndex === null) {
-          chosenIndex = findWinningMove("X"); // Always block player
-        }
-        if (chosenIndex === null && boardState[4] === "") {
-          chosenIndex = 4; // Center occupancy
-        }
-        if (chosenIndex === null) {
-          // Thoda mistakes rakhela chhe jethi game impossible na bane
-          if (Math.random() < 0.25) {
+        } 
+        else if (currentLevel >= 2 && currentLevel <= 4) {
+          if (boardState[4] === "" && Math.random() < 0.6) {
+            chosenIndex = 4;
+          } else {
             chosenIndex = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+          }
+        } 
+        else {
+          // Level 5+ Smart Play
+          const corners = [0, 2, 6, 8].filter(i => boardState[i] === "");
+          const edges = [1, 3, 5, 7].filter(i => boardState[i] === "");
+
+          if (boardState[4] === "") {
+            chosenIndex = 4;
+          } else if (corners.length > 0 && Math.random() < 0.75) {
+            chosenIndex = corners[Math.floor(Math.random() * corners.length)];
+          } else if (edges.length > 0) {
+            chosenIndex = edges[Math.floor(Math.random() * edges.length)];
           } else {
             chosenIndex = emptyIndices[0];
           }
         }
+      }
+
+      if (chosenIndex === null || boardState[chosenIndex] !== "") {
+        chosenIndex = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
       }
 
       makeMove(chosenIndex, "O");
