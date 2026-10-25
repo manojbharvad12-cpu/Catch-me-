@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Block Blast Adventure Master</title>
+  <title>Block Blast Pro 3D</title>
   <style>
     * {
       box-sizing: border-box;
@@ -12,352 +12,56 @@
       user-select: none;
       -webkit-user-select: none;
       touch-action: none;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: 'Segoe UI', Roboto, -apple-system, sans-serif;
     }
 
     body {
-      background: #2b3035;
+      background-color: #383e42;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      padding: 12px 10px 20px 10px;
+      justify-content: center;
       overflow: hidden;
     }
 
-    .top-bar {
-      width: 100%;
-      max-width: 360px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      height: 48px;
-    }
-
-    .hs-box {
-      color: #ffb703;
-      font-size: 22px;
-      font-weight: 900;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .gear-btn {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.15);
-      border: none;
-      color: #fff;
-      font-size: 22px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-    }
-
-    .gear-btn:active { transform: scale(0.92); }
-
-    .current-score {
-      font-size: 52px;
-      font-weight: 900;
-      color: #72efdd;
-      text-shadow: 0 4px 14px rgba(114, 239, 221, 0.4);
-      margin-top: -6px;
-    }
-
-    .board-wrapper {
-      width: 336px;
-      height: 336px;
-      background: #1f2326;
-      border: 3px solid #3a4146;
-      border-radius: 12px;
-      display: grid;
-      grid-template-columns: repeat(8, 1fr);
-      grid-template-rows: repeat(8, 1fr);
-      gap: 3px;
-      padding: 4px;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.5);
-    }
-
-    .grid-cell {
-      background: #2d3339;
-      border-radius: 4px;
-      transition: background 0.08s;
-    }
-
-    .grid-cell.filled {
-      background: linear-gradient(135deg, #2ec4b6 0%, #0f9f90 100%);
-      box-shadow: inset 1px 1px 2px rgba(255,255,255,0.6), inset -1px -1px 2px rgba(0,0,0,0.4);
-    }
-
-    .grid-cell.preview-hover {
-      background: rgba(46, 196, 182, 0.55);
-      border: 1px solid #72efdd;
-    }
-
-    .grid-cell.clearing {
-      animation: blastAnim 0.3s forwards;
-    }
-
-    @keyframes blastAnim {
-      0% { transform: scale(1); background: #ffffff; }
-      50% { transform: scale(1.15); background: #70e000; }
-      100% { transform: scale(0); opacity: 0; }
-    }
-
-    .dock-wrapper {
-      width: 100%;
-      max-width: 360px;
-      height: 125px;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      background: rgba(20, 24, 28, 0.45);
-      border-radius: 18px;
-      padding: 8px;
-    }
-
-    .dock-slot {
-      width: 95px;
-      height: 95px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .draggable-shape {
-      display: grid;
-      gap: 2px;
-      touch-action: none;
-      cursor: grab;
-    }
-
-    .block-unit {
-      width: 22px;
-      height: 22px;
-      background: linear-gradient(135deg, #2ec4b6 0%, #0f9f90 100%);
-      border-radius: 4px;
-      box-shadow: inset 1px 1px 2px rgba(255,255,255,0.5);
-    }
-
-    #floatingDrag {
-      position: fixed;
-      pointer-events: none;
-      display: none;
-      z-index: 1000;
-      transform: translate(-50%, -50%);
-    }
-
-    #floatingDrag .block-unit {
-      width: 38px;
-      height: 38px;
-    }
-
-    #floatingDrag .draggable-shape {
-      gap: 3px;
-    }
-
-    .settings-modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.72);
-      backdrop-filter: blur(4px);
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-    }
-
-    .settings-modal.active { display: flex; }
-
-    .settings-card {
-      width: 310px;
-      background: #4a545e;
-      border: 3px solid #737f8d;
-      border-radius: 28px;
-      padding: 24px 18px 20px 18px;
-      position: relative;
-      color: #fff;
-      box-shadow: 0 16px 35px rgba(0,0,0,0.6);
-      text-align: center;
-    }
-
-    .close-btn {
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: #363e46;
-      border: none;
-      color: #fff;
-      font-size: 16px;
-      font-weight: 900;
-      cursor: pointer;
-    }
-
-    .settings-title {
-      font-size: 26px;
-      font-weight: 900;
-      margin-bottom: 22px;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.4);
-    }
-
-    .toggle-row {
-      display: flex;
-      justify-content: space-around;
-      margin-bottom: 20px;
-    }
-
-    .toggle-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-    }
-
-    .toggle-box {
-      width: 65px;
-      height: 65px;
-      background: #363e46;
-      border-radius: 18px;
-      border: 2px solid #5a6673;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    }
-
-    .toggle-box.active {
-      border-color: #2ec4b6;
-      background: #25444a;
-    }
-
-    .toggle-lbl {
-      font-size: 13px;
-      font-weight: 700;
-      color: #e2e8f0;
-    }
-
-    .modal-menu-btn {
-      width: 100%;
-      height: 54px;
-      background: linear-gradient(180deg, #38d629 0%, #1a9e0f 100%);
-      border: 2px solid #7bf06f;
-      border-radius: 18px;
-      display: flex;
-      align-items: center;
-      padding: 0 16px;
-      gap: 12px;
-      font-size: 18px;
-      font-weight: 900;
-      color: #fff;
-      box-shadow: 0 6px 0 #11680a, 0 10px 16px rgba(0,0,0,0.35);
-      cursor: pointer;
-      margin-bottom: 14px;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.4);
-    }
-
-    .modal-menu-btn:active {
-      transform: translateY(3px);
-      box-shadow: 0 3px 0 #11680a;
-    }
-
-    .modal-menu-btn.settings-sub {
-      background: linear-gradient(180deg, #25c025 0%, #16930d 100%);
-    }
-
-    /* GAME OVER MODAL */
-    .game-modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.85);
-      align-items: center;
-      justify-content: center;
-      z-index: 2500;
-    }
-
-    .game-modal.show { display: flex; }
-
-    .modal-card {
-      background: #1f2326;
-      border: 2px solid #3a4146;
-      padding: 30px;
-      border-radius: 20px;
-      text-align: center;
-      width: 280px;
-      color: white;
+    #gameCanvas {
+      background: #383e42;
+      display: block;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
     }
   </style>
 </head>
 <body>
 
-  <div class="top-bar">
-    <div class="hs-box">👑 <span id="hsTxt">0</span></div>
-    <button class="gear-btn" onclick="openSettings()">⚙️</button>
-  </div>
-
-  <div class="current-score" id="scoreTxt">0</div>
-
-  <div class="board-wrapper" id="gameBoard"></div>
-
-  <div class="dock-wrapper" id="dockHolder"></div>
-
-  <div id="floatingDrag"></div>
-
-  <!-- SETTINGS MODAL -->
-  <div class="settings-modal" id="settingsModal">
-    <div class="settings-card">
-      <button class="close-btn" onclick="closeSettings()">✕</button>
-      <div class="settings-title">Settings</div>
-
-      <div class="toggle-row">
-        <div class="toggle-item" onclick="toggleSound()">
-          <div class="toggle-box active" id="soundBox">🔊</div>
-          <div class="toggle-lbl">Sound</div>
-        </div>
-        <div class="toggle-item" onclick="toggleBGM()">
-          <div class="toggle-box active" id="bgmBox">🎵</div>
-          <div class="toggle-lbl">BGM</div>
-        </div>
-      </div>
-
-      <button class="modal-menu-btn" onclick="location.href='achievements.html'">
-        <span>🎖️</span> Medal
-      </button>
-      <button class="modal-menu-btn settings-sub" onclick="location.href='settings.html'">
-        <span>⚙️</span> More Settings
-      </button>
-    </div>
-  </div>
-
-  <!-- GAME OVER MODAL -->
-  <div class="game-modal" id="gameOverModal">
-    <div class="modal-card">
-      <h2 style="color:#ff4d6d; margin-bottom:10px;">Game Over!</h2>
-      <p style="margin-bottom:20px; font-size:16px;">Score: <span id="finalScore">0</span></p>
-      <button class="modal-menu-btn" style="justify-content:center;" onclick="restartGame()">Play Again</button>
-    </div>
-  </div>
+  <canvas id="gameCanvas"></canvas>
 
   <script>
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    let isSoundOn = localStorage.getItem('bb_sound') !== 'false';
-    let isBgmOn = localStorage.getItem('bb_bgm') !== 'false';
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
 
-    function playTone(freq, type = 'sine', duration = 0.08) {
-      if (!isSoundOn) return;
+    // MOBILE FIT SCALING
+    const VIEW_W = 380;
+    const VIEW_H = 760;
+    let scale = 1;
+
+    function resizeCanvas() {
+      const windowW = window.innerWidth;
+      const windowH = window.innerHeight;
+      scale = Math.min(windowW / VIEW_W, windowH / VIEW_H);
+      canvas.width = VIEW_W * scale;
+      canvas.height = VIEW_H * scale;
+      ctx.imageSmoothingEnabled = true;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // AUDIO
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playBeep(freq, duration = 0.08) {
       try {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        osc.type = type;
         osc.frequency.value = freq;
         gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
@@ -368,311 +72,434 @@
       } catch(e){}
     }
 
+    // GAME CONSTANTS
+    const GRID_SIZE = 8;
+    const BOARD_LEFT = 24;
+    const BOARD_TOP = 160;
+    const BOARD_SIZE = 332;
+    const CELL_SIZE = (BOARD_SIZE - 18) / 8; // approx 39.2px
+
     let grid = Array(8).fill(null).map(() => Array(8).fill(0));
     let score = 0;
-    let highScore = parseInt(localStorage.getItem('bb_user_highscore')) || 0;
-    let dockItems = [null, null, null];
+    let highScore = parseInt(localStorage.getItem('bb_real_hs')) || 40455;
+    let combo = 0;
+    let particles = [];
+    let popups = [];
 
-    const EASY_SHAPES = [
-      [[1]], [[1,1]], [[1],[1]], [[1,1,1]], [[1],[1],[1]], [[1,1],[1,1]]
+    // BLOCK PALETTE
+    const BLOCK_COLOR = {
+      base: '#2f6854',
+      top: '#459276',
+      bottom: '#1e4638',
+      shine: 'rgba(255, 255, 255, 0.45)'
+    };
+
+    // SHAPES
+    const SHAPES = [
+      { m: [[1]], w:1, h:1 },
+      { m: [[1,1]], w:2, h:1 },
+      { m: [[1],[1]], w:1, h:2 },
+      { m: [[1,1,1]], w:3, h:1 },
+      { m: [[1],[1],[1]], w:1, h:3 },
+      { m: [[1,1,1,1]], w:4, h:1 },
+      { m: [[1,1],[1,1]], w:2, h:2 },
+      { m: [[1,1,1],[1,1,1],[1,1,1]], w:3, h:3 },
+      { m: [[1,0],[1,0],[1,1]], w:2, h:3 },
+      { m: [[1,1,1],[0,1,0]], w:3, h:2 },
+      { m: [[1,1],[0,1],[0,1]], w:2, h:3 }
     ];
-    const HARD_SHAPES = [
-      [[1,1,1,1]], [[1,0],[1,0],[1,1]], [[1,1,1],[0,1,0]], [[1,1,1],[1,1,1],[1,1,1]]
-    ];
 
-    document.getElementById('hsTxt').innerText = highScore;
-
-    function initBoard() {
-      const b = document.getElementById('gameBoard');
-      b.innerHTML = '';
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-          const cell = document.createElement('div');
-          cell.className = 'grid-cell';
-          cell.dataset.r = r;
-          cell.dataset.c = c;
-          b.appendChild(cell);
-        }
-      }
-      restartGame();
-    }
-
-    // GAME START & ROUND TRACKING
-    function restartGame() {
-      document.getElementById('gameOverModal').classList.remove('show');
-      grid = Array(8).fill(null).map(() => Array(8).fill(0));
-      score = 0;
-      updateScore();
-      renderGrid();
-
-      // Real rounds tracking for Achievement screen
-      let totalRounds = parseInt(localStorage.getItem('bb_total_rounds')) || 0;
-      localStorage.setItem('bb_total_rounds', totalRounds + 1);
-
-      spawnDock();
-    }
+    let dock = [null, null, null];
+    let dragging = null; // { idx, shape, x, y, startX, startY }
 
     function spawnDock() {
-      for (let i = 0; i < 3; i++) {
-        if (score < highScore || highScore === 0) {
-          dockItems[i] = (Math.random() < 0.85)
-            ? EASY_SHAPES[Math.floor(Math.random() * EASY_SHAPES.length)]
-            : HARD_SHAPES[Math.floor(Math.random() * HARD_SHAPES.length)];
-        } else {
-          dockItems[i] = (Math.random() < 0.50)
-            ? EASY_SHAPES[Math.floor(Math.random() * EASY_SHAPES.length)]
-            : HARD_SHAPES[Math.floor(Math.random() * HARD_SHAPES.length)];
+      for(let i=0; i<3; i++) {
+        dock[i] = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+      }
+    }
+    spawnDock();
+
+    // RENDER HELPER: DRAW 3D BEVELED BLOCK
+    function draw3DBlock(x, y, size, alpha = 1) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+
+      // Base
+      ctx.fillStyle = BLOCK_COLOR.base;
+      ctx.beginPath();
+      ctx.roundRect(x, y, size, size, 5);
+      ctx.fill();
+
+      // Top Highlight Bevel
+      ctx.fillStyle = BLOCK_COLOR.top;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + size, y);
+      ctx.lineTo(x + size - 4, y + 4);
+      ctx.lineTo(x + 4, y + 4);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + 4, y + 4);
+      ctx.lineTo(x + 4, y + size - 4);
+      ctx.lineTo(x, y + size);
+      ctx.closePath();
+      ctx.fill();
+
+      // Bottom Dark Bevel
+      ctx.fillStyle = BLOCK_COLOR.bottom;
+      ctx.beginPath();
+      ctx.moveTo(x, y + size);
+      ctx.lineTo(x + 4, y + size - 4);
+      ctx.lineTo(x + size - 4, y + size - 4);
+      ctx.lineTo(x + size, y + size);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(x + size, y);
+      ctx.lineTo(x + size, y + size);
+      ctx.lineTo(x + size - 4, y + size - 4);
+      ctx.lineTo(x + size - 4, y + 4);
+      ctx.closePath();
+      ctx.fill();
+
+      // Inner Soft Center
+      ctx.fillStyle = BLOCK_COLOR.shine;
+      ctx.fillRect(x + 6, y + 6, size - 12, size - 12);
+
+      ctx.restore();
+    }
+
+    // MAIN GAME LOOP (60 FPS)
+    let diamondRot = 0;
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.scale(scale, scale);
+
+      // 1. TOP HEADER (Crown + High Score)
+      ctx.fillStyle = '#ffb703';
+      ctx.font = '900 20px sans-serif';
+      ctx.fillText('👑 ' + highScore, 24, 46);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '22px sans-serif';
+      ctx.fillText('⚙️', 332, 46);
+
+      // 2. RAINBOW ROTATING DIAMOND BACKGROUND
+      diamondRot += 0.015;
+      const scoreCenterX = 190;
+      const scoreCenterY = 96;
+
+      if(combo > 0) {
+        ctx.save();
+        ctx.translate(scoreCenterX, scoreCenterY);
+        ctx.rotate(diamondRot);
+        const grad = ctx.createLinearGradient(-30, -30, 30, 30);
+        grad.addColorStop(0, '#f72585');
+        grad.addColorStop(0.5, '#7209b7');
+        grad.addColorStop(1, '#4cc9f0');
+        ctx.fillStyle = grad;
+        ctx.fillRect(-22, -22, 44, 44);
+        ctx.restore();
+      }
+
+      // 3. MAIN SCORE DISPLAY (Rainbow Gradient Style)
+      const rainbowGrad = ctx.createLinearGradient(120, 0, 260, 0);
+      rainbowGrad.addColorStop(0, '#4cc9f0');
+      rainbowGrad.addColorStop(0.3, '#72efdd');
+      rainbowGrad.addColorStop(0.6, '#ffd166');
+      rainbowGrad.addColorStop(1, '#ff4d6d');
+
+      ctx.fillStyle = rainbowGrad;
+      ctx.font = '900 52px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(score, scoreCenterX, 114);
+
+      // 4. 8x8 BOARD BACKGROUND
+      ctx.fillStyle = '#272b2f';
+      ctx.beginPath();
+      ctx.roundRect(BOARD_LEFT, BOARD_TOP, BOARD_SIZE, BOARD_SIZE, 12);
+      ctx.fill();
+
+      // Empty Slot Grid
+      for(let r=0; r<8; r++) {
+        for(let c=0; c<8; c++) {
+          const cx = BOARD_LEFT + 9 + c * (CELL_SIZE + 2);
+          const cy = BOARD_TOP + 9 + r * (CELL_SIZE + 2);
+          ctx.fillStyle = '#31373c';
+          ctx.beginPath();
+          ctx.roundRect(cx, cy, CELL_SIZE, CELL_SIZE, 4);
+          ctx.fill();
+
+          if(grid[r][c] === 1) {
+            draw3DBlock(cx, cy, CELL_SIZE);
+          }
         }
       }
-      renderDock();
-      checkGameOver();
-    }
 
-    function renderDock() {
-      const d = document.getElementById('dockHolder');
-      d.innerHTML = '';
-      dockItems.forEach((shape, idx) => {
-        const slot = document.createElement('div');
-        slot.className = 'dock-slot';
-        if (shape) {
-          const el = buildShapeEl(shape, 22);
-          bindDrag(el, idx, shape);
-          slot.appendChild(el);
-        }
-        d.appendChild(slot);
-      });
-    }
-
-    function buildShapeEl(matrix, size) {
-      const wrap = document.createElement('div');
-      wrap.className = 'draggable-shape';
-      wrap.style.gridTemplateColumns = `repeat(${matrix[0].length}, ${size}px)`;
-      matrix.forEach(row => {
-        row.forEach(val => {
-          const u = document.createElement('div');
-          if (val) {
-            u.className = 'block-unit';
-            u.style.width = size + 'px';
-            u.style.height = size + 'px';
-          } else {
-            u.style.width = size + 'px';
-            u.style.height = size + 'px';
+      // 5. HOVER PREVIEW ON DRAG
+      if(dragging) {
+        const coords = getGridCoords(dragging.x, dragging.y - 70, dragging.shape);
+        if(coords && canFit(dragging.shape.m, coords.r, coords.c)) {
+          for(let r=0; r<dragging.shape.h; r++) {
+            for(let c=0; c<dragging.shape.w; c++) {
+              if(dragging.shape.m[r][c]) {
+                const px = BOARD_LEFT + 9 + (coords.c + c) * (CELL_SIZE + 2);
+                const py = BOARD_TOP + 9 + (coords.r + r) * (CELL_SIZE + 2);
+                draw3DBlock(px, py, CELL_SIZE, 0.4);
+              }
+            }
           }
-          wrap.appendChild(u);
-        });
-      });
-      return wrap;
+        }
+      }
+
+      // 6. BOTTOM DOCK PIECES
+      const dockY = 560;
+      const slotCenters = [75, 190, 305];
+
+      for(let i=0; i<3; i++) {
+        const shape = dock[i];
+        if(shape && (!dragging || dragging.idx !== i)) {
+          const uSize = 20;
+          const startX = slotCenters[i] - (shape.w * uSize) / 2;
+          const startY = dockY - (shape.h * uSize) / 2;
+
+          for(let r=0; r<shape.h; r++) {
+            for(let c=0; c<shape.w; c++) {
+              if(shape.m[r][c]) {
+                draw3DBlock(startX + c * uSize, startY + r * uSize, uSize);
+              }
+            }
+          }
+        }
+      }
+
+      // 7. DRAGGING PIECE (Under Finger with 70px Lift)
+      if(dragging) {
+        const uSize = CELL_SIZE;
+        const dragDrawX = dragging.x - (dragging.shape.w * uSize) / 2;
+        const dragDrawY = (dragging.y - 70) - (dragging.shape.h * uSize) / 2;
+
+        for(let r=0; r<dragging.shape.h; r++) {
+          for(let c=0; c<dragging.shape.w; c++) {
+            if(dragging.shape.m[r][c]) {
+              draw3DBlock(dragDrawX + c * (uSize + 2), dragDrawY + r * (uSize + 2), uSize, 0.95);
+            }
+          }
+        }
+      }
+
+      // 8. PARTICLES BURST
+      for(let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.alpha;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= 0.03;
+        if(p.alpha <= 0) particles.splice(i, 1);
+      }
+      ctx.globalAlpha = 1;
+
+      // 9. COMBO & SCORE POPUPS
+      for(let i = popups.length - 1; i >= 0; i--) {
+        const pop = popups[i];
+        ctx.save();
+        ctx.fillStyle = pop.color;
+        ctx.font = `900 ${pop.size}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(0,0,0,0.6)';
+        ctx.shadowBlur = 8;
+        ctx.fillText(pop.text, pop.x, pop.y);
+        ctx.restore();
+
+        pop.y -= 1.2;
+        pop.life--;
+        if(pop.life <= 0) popups.splice(i, 1);
+      }
+
+      ctx.restore();
+      requestAnimationFrame(render);
+    }
+    requestAnimationFrame(render);
+
+    // TOUCH LOGIC
+    function getCanvasPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: (clientX - rect.left) / scale,
+        y: (clientY - rect.top) / scale
+      };
     }
 
-    let dragIdx = null;
-    let dragShape = null;
-    const floating = document.getElementById('floatingDrag');
-    const DRAG_OFFSET_Y = 65;
+    function onPointerDown(e) {
+      const { x, y } = getCanvasPos(e);
+      const slotCenters = [75, 190, 305];
+      const dockY = 560;
 
-    function bindDrag(el, idx, matrix) {
-      el.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        dragIdx = idx;
-        dragShape = matrix;
-        floating.innerHTML = '';
-        floating.appendChild(buildShapeEl(matrix, 38));
-        floating.style.display = 'block';
-        updateFloatingPos(e.clientX, e.clientY - DRAG_OFFSET_Y);
-        el.style.opacity = '0';
-        playTone(450);
-      });
+      for(let i=0; i<3; i++) {
+        if(dock[i]) {
+          const dist = Math.hypot(x - slotCenters[i], y - dockY);
+          if(dist < 55) {
+            dragging = { idx: i, shape: dock[i], x: x, y: y };
+            playBeep(450);
+            break;
+          }
+        }
+      }
     }
 
-    window.addEventListener('pointermove', (e) => {
-      if (dragIdx === null) return;
-      const y = e.clientY - DRAG_OFFSET_Y;
-      updateFloatingPos(e.clientX, y);
-      showHover(e.clientX, y);
-    });
-
-    window.addEventListener('pointerup', (e) => {
-      if (dragIdx === null) return;
-      const y = e.clientY - DRAG_OFFSET_Y;
-      placeBlock(e.clientX, y);
-      floating.style.display = 'none';
-      clearHover();
-      dragIdx = null;
-      dragShape = null;
-      renderDock();
-    });
-
-    function updateFloatingPos(x, y) {
-      floating.style.left = x + 'px';
-      floating.style.top = y + 'px';
+    function onPointerMove(e) {
+      if(!dragging) return;
+      const { x, y } = getCanvasPos(e);
+      dragging.x = x;
+      dragging.y = y;
     }
 
-    function getCoords(x, y) {
-      const rect = document.getElementById('gameBoard').getBoundingClientRect();
-      const cellSize = rect.width / 8;
-      const h = dragShape.length;
-      const w = dragShape[0].length;
-      const tlX = x - (w * cellSize) / 2;
-      const tlY = y - (h * cellSize) / 2;
-      const c = Math.round((tlX - rect.left) / cellSize);
-      const r = Math.round((tlY - rect.top) / cellSize);
+    function onPointerUp() {
+      if(!dragging) return;
+      const targetY = dragging.y - 70;
+      const coords = getGridCoords(dragging.x, targetY, dragging.shape);
+
+      if(coords && canFit(dragging.shape.m, coords.r, coords.c)) {
+        // Place piece
+        let placedCount = 0;
+        for(let r=0; r<dragging.shape.h; r++) {
+          for(let c=0; c<dragging.shape.w; c++) {
+            if(dragging.shape.m[r][c]) {
+              grid[coords.r + r][coords.c + c] = 1;
+              placedCount++;
+            }
+          }
+        }
+
+        dock[dragging.idx] = null;
+        score += placedCount * 10;
+        playBeep(320);
+
+        checkLineClears();
+
+        if(dock.every(s => s === null)) {
+          spawnDock();
+        }
+      }
+
+      dragging = null;
+    }
+
+    window.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+
+    // COORD & FIT CHECK
+    function getGridCoords(x, y, shape) {
+      const cellW = CELL_SIZE + 2;
+      const startX = BOARD_LEFT + 9;
+      const startY = BOARD_TOP + 9;
+
+      const topLeftX = x - (shape.w * cellW) / 2;
+      const topLeftY = y - (shape.h * cellW) / 2;
+
+      const c = Math.round((topLeftX - startX) / cellW);
+      const r = Math.round((topLeftY - startY) / cellW);
+
       return { r, c };
     }
 
     function canFit(matrix, r, c) {
-      if (r < 0 || c < 0 || r + matrix.length > 8 || c + matrix[0].length > 8) return false;
-      for (let i = 0; i < matrix.length; i++) {
-        for (let j = 0; j < matrix[0].length; j++) {
-          if (matrix[i][j] && grid[r + i][c + j] === 1) return false;
+      if(r < 0 || c < 0 || r + matrix.length > 8 || c + matrix[0].length > 8) return false;
+      for(let i=0; i<matrix.length; i++) {
+        for(let j=0; j<matrix[0].length; j++) {
+          if(matrix[i][j] && grid[r+i][c+j] === 1) return false;
         }
       }
       return true;
     }
 
-    function showHover(x, y) {
-      clearHover();
-      const { r, c } = getCoords(x, y);
-      if (canFit(dragShape, r, c)) {
-        for (let i = 0; i < dragShape.length; i++) {
-          for (let j = 0; j < dragShape[0].length; j++) {
-            if (dragShape[i][j]) {
-              const cell = document.querySelector(`.grid-cell[data-r='${r+i}'][data-c='${c+j}']`);
-              if (cell) cell.classList.add('preview-hover');
-            }
+    // LINE CLEARING, BURSTS & COMBO LOGIC
+    function checkLineClears() {
+      let rClears = [];
+      let cClears = [];
+
+      for(let r=0; r<8; r++) {
+        if(grid[r].every(v => v === 1)) rClears.push(r);
+      }
+      for(let c=0; c<8; c++) {
+        let full = true;
+        for(let r=0; r<8; r++) {
+          if(grid[r][c] === 0) { full = false; break; }
+        }
+        if(full) cClears.push(c);
+      }
+
+      const totalLines = rClears.length + cClears.length;
+
+      if(totalLines > 0) {
+        combo++;
+        const linePoints = totalLines * 100 + (combo > 1 ? combo * 70 : 0);
+        score += linePoints;
+
+        if(score > highScore) {
+          highScore = score;
+          localStorage.setItem('bb_real_hs', highScore);
+        }
+
+        // Spawn Floating Text (+105 / Combo 3!)
+        popups.push({
+          x: 190, y: 150,
+          text: `+${linePoints}`,
+          color: '#ffd166',
+          size: 26, life: 40
+        });
+
+        if(combo > 1) {
+          popups.push({
+            x: 190, y: 310,
+            text: `Combo ${combo}`,
+            color: '#ffffff',
+            size: 34, life: 50
+          });
+        }
+
+        // Particle Burst
+        rClears.forEach(r => {
+          grid[r].fill(0);
+          for(let c=0; c<8; c++) spawnParticlesAtCell(r, c);
+        });
+        cClears.forEach(c => {
+          for(let r=0; r<8; r++) {
+            grid[r][c] = 0;
+            spawnParticlesAtCell(r, c);
           }
-        }
+        });
+
+        playBeep(650, 0.25);
+      } else {
+        combo = 0;
       }
     }
 
-    function clearHover() {
-      document.querySelectorAll('.grid-cell.preview-hover').forEach(c => c.classList.remove('preview-hover'));
-    }
-
-    function placeBlock(x, y) {
-      const { r, c } = getCoords(x, y);
-      if (canFit(dragShape, r, c)) {
-        let placed = 0;
-        for (let i = 0; i < dragShape.length; i++) {
-          for (let j = 0; j < dragShape[0].length; j++) {
-            if (dragShape[i][j]) {
-              grid[r + i][c + j] = 1;
-              placed++;
-            }
-          }
-        }
-        dockItems[dragIdx] = null;
-        score += placed * 10;
-        updateScore();
-        playTone(320);
-        renderGrid();
-        clearLines();
-
-        if (dockItems.every(s => s === null)) {
-          spawnDock();
-        } else {
-          checkGameOver();
-        }
+    function spawnParticlesAtCell(r, c) {
+      const cx = BOARD_LEFT + 9 + c * (CELL_SIZE + 2) + CELL_SIZE/2;
+      const cy = BOARD_TOP + 9 + r * (CELL_SIZE + 2) + CELL_SIZE/2;
+      for(let i=0; i<6; i++) {
+        particles.push({
+          x: cx, y: cy,
+          vx: (Math.random() - 0.5) * 6,
+          vy: (Math.random() - 0.5) * 6,
+          size: Math.random() * 4 + 3,
+          color: Math.random() < 0.5 ? '#72efdd' : '#ffd166',
+          alpha: 1
+        });
       }
     }
-
-    function renderGrid() {
-      document.querySelectorAll('.grid-cell').forEach(c => {
-        const r = parseInt(c.dataset.r);
-        const col = parseInt(c.dataset.c);
-        if (grid[r][col] === 1) c.classList.add('filled');
-        else c.classList.remove('filled');
-      });
-    }
-
-    // LINE CLEARING, COMBO & STATS UPDATE
-    function clearLines() {
-      let rClear = [], cClear = [];
-      for (let r = 0; r < 8; r++) { if (grid[r].every(v => v === 1)) rClear.push(r); }
-      for (let c = 0; c < 8; c++) {
-        let fl = true;
-        for (let r = 0; r < 8; r++) { if (grid[r][c] === 0) { fl = false; break; } }
-        if (fl) cClear.push(c);
-      }
-
-      const totalLines = rClear.length + cClear.length;
-      if (totalLines > 0) {
-        rClear.forEach(r => grid[r].fill(0));
-        cClear.forEach(c => { for (let r = 0; r < 8; r++) grid[r][c] = 0; });
-        score += totalLines * 120;
-        playTone(650, 'triangle', 0.25);
-        updateScore();
-
-        // 1. Combo Tracking
-        let curMaxCombo = parseInt(localStorage.getItem('bb_max_combo')) || 0;
-        if (totalLines > curMaxCombo) {
-          localStorage.setItem('bb_max_combo', totalLines);
-        }
-
-        // 2. Total Lines Cleared Tracking
-        let totalCleared = parseInt(localStorage.getItem('bb_total_cleared')) || 0;
-        localStorage.setItem('bb_total_cleared', totalCleared + totalLines);
-
-        setTimeout(renderGrid, 200);
-      }
-    }
-
-    function updateScore() {
-      document.getElementById('scoreTxt').innerText = score;
-      if (score > highScore) {
-        highScore = score;
-        localStorage.setItem('bb_user_highscore', highScore);
-        document.getElementById('hsTxt').innerText = highScore;
-      }
-    }
-
-    function checkGameOver() {
-      const remaining = dockItems.filter(s => s !== null);
-      if (remaining.length === 0) return;
-
-      let canFitAny = false;
-      for (let shape of remaining) {
-        for (let r = 0; r < 8; r++) {
-          for (let c = 0; c < 8; c++) {
-            if (canFit(shape, r, c)) {
-              canFitAny = true;
-              break;
-            }
-          }
-          if (canFitAny) break;
-        }
-        if (canFitAny) break;
-      }
-
-      if (!canFitAny) {
-        setTimeout(() => {
-          document.getElementById('finalScore').innerText = score;
-          document.getElementById('gameOverModal').classList.add('show');
-        }, 300);
-      }
-    }
-
-    function openSettings() {
-      document.getElementById('settingsModal').classList.add('active');
-      document.getElementById('soundBox').innerText = isSoundOn ? '🔊' : '🔇';
-      document.getElementById('bgmBox').innerText = isBgmOn ? '🎵' : '🔇';
-    }
-
-    function closeSettings() {
-      document.getElementById('settingsModal').classList.remove('active');
-    }
-
-    function toggleSound() {
-      isSoundOn = !isSoundOn;
-      localStorage.setItem('bb_sound', isSoundOn);
-      document.getElementById('soundBox').innerText = isSoundOn ? '🔊' : '🔇';
-    }
-
-    function toggleBGM() {
-      isBgmOn = !isBgmOn;
-      localStorage.setItem('bb_bgm', isBgmOn);
-      document.getElementById('bgmBox').innerText = isBgmOn ? '🎵' : '🔇';
-    }
-
-    window.onload = initBoard;
   </script>
 </body>
 </html>
