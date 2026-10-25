@@ -44,6 +44,7 @@
       background: linear-gradient(180deg, #1d6fa5 0%, #0d3b66 100%);
       justify-content: center;
       z-index: 50;
+      cursor: pointer;
     }
 
     .splash-logo {
@@ -53,17 +54,17 @@
       text-shadow: 0 6px 0 #082947, 0 12px 25px rgba(0,0,0,0.5);
       letter-spacing: 2px;
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 25px;
       animation: float 2s infinite ease-in-out;
     }
 
     .splash-sub {
-      font-size: 14px;
+      font-size: 13px;
       color: #70d6ff;
       letter-spacing: 3px;
       font-weight: 700;
-      margin-top: -20px;
-      margin-bottom: 50px;
+      margin-top: -18px;
+      margin-bottom: 40px;
     }
 
     .loader {
@@ -119,7 +120,7 @@
 
     .game-logo-box {
       text-align: center;
-      margin-top: 15px;
+      margin-top: 10px;
     }
 
     .crown-icon {
@@ -288,7 +289,7 @@
       box-shadow: inset 1px 1px 2px rgba(255,255,255,0.5), inset -1px -1px 2px rgba(0,0,0,0.3);
     }
 
-    /* DRAGGING FLOATING ELEMENT */
+    /* DRAG FLOATING */
     #floatingDrag {
       position: fixed;
       pointer-events: none;
@@ -333,7 +334,7 @@
 <body>
 
   <!-- 1. SPLASH -->
-  <div class="screen active" id="splashScreen">
+  <div class="screen active" id="splashScreen" onclick="dismissSplash()">
     <div class="splash-logo">BLOCK<br>BLAST</div>
     <div class="splash-sub">ADVENTURE MASTER</div>
     <div class="loader">
@@ -362,7 +363,7 @@
       <button class="glossy-btn btn-classic" onclick="startClassicGame()">
         <span>♾️</span> Classic
       </button>
-      <button class="glossy-btn btn-more" onclick="alert('More games feature unlock thase!')">
+      <button class="glossy-btn btn-more" onclick="alert('More games feature jaldi aavse!')">
         <span>🎮</span> More Games
       </button>
     </div>
@@ -384,7 +385,7 @@
 
   <div id="floatingDrag"></div>
 
-  <!-- MODAL -->
+  <!-- GAME OVER MODAL -->
   <div class="game-modal" id="gameOverModal">
     <div class="modal-card">
       <h2 style="color:#ff4d6d; margin-bottom:10px;">Game Over!</h2>
@@ -412,8 +413,7 @@
 
     let grid = Array(8).fill(null).map(() => Array(8).fill(0));
     let score = 0;
-    // Real user High Score (Starts from 0)
-    let highScore = parseInt(localStorage.getItem('bb_real_high')) || 0;
+    let highScore = parseInt(localStorage.getItem('bb_user_highscore')) || 0;
     let dockItems = [null, null, null];
 
     const SHAPES = [
@@ -429,15 +429,23 @@
       [[1, 1, 1], [0, 1, 0]] // T
     ];
 
-    window.addEventListener('load', () => {
-      setTimeout(() => {
-        document.getElementById('splashScreen').classList.remove('active');
-        document.getElementById('menuScreen').classList.add('active');
-      }, 2000);
+    // INSTANT AUTO-BYPASS FOR SPLASH SCREEN
+    let splashDismissed = false;
+    function dismissSplash() {
+      if (splashDismissed) return;
+      splashDismissed = true;
+      const s = document.getElementById('splashScreen');
+      if (s) s.classList.remove('active');
+      const m = document.getElementById('menuScreen');
+      if (m) m.classList.add('active');
+    }
 
-      initGridUI();
-      document.getElementById('highScoreText').innerText = highScore;
-    });
+    // Direct timer: 1.5 seconds ma bypass thase
+    setTimeout(dismissSplash, 1500);
+
+    // Initial setup
+    initGridUI();
+    document.getElementById('highScoreText').innerText = highScore;
 
     function goToMenu() {
       document.getElementById('gameScreen').classList.remove('active');
@@ -529,11 +537,11 @@
       return wrap;
     }
 
-    // PERFECT TOUCH & DRAG SYSTEM
+    // DRAG LOGIC
     let activeDragIdx = null;
     let activeShapeMatrix = null;
     const floating = document.getElementById('floatingDrag');
-    const DRAG_OFFSET_Y = 70; // Finger karta upar dekhase jethi ungli block ne hide na kare
+    const DRAG_OFFSET_Y = 65; // Finger thi thodu upar jethi ungli pachhad hide na thay
 
     function setupDragListeners(element, index, matrix) {
       element.addEventListener('pointerdown', (e) => {
@@ -575,7 +583,6 @@
       floating.style.top = y + 'px';
     }
 
-    // ACCURATE TOP-LEFT GRID MAPPING
     function getGridCoordsFromPoint(x, y) {
       const gridEl = document.getElementById('gameGrid');
       const rect = gridEl.getBoundingClientRect();
@@ -584,7 +591,6 @@
       const shapeH = activeShapeMatrix.length;
       const shapeW = activeShapeMatrix[0].length;
 
-      // Center-aligned offset: Block na center mathi top-left corner shodho
       const topLeftX = x - (shapeW * cellSize) / 2;
       const topLeftY = y - (shapeH * cellSize) / 2;
 
@@ -662,7 +668,6 @@
       }
     }
 
-    // LINE CLEARING
     function clearLines() {
       let fullRows = [];
       let fullCols = [];
@@ -714,7 +719,7 @@
       document.getElementById('scoreText').innerText = score;
       if (score > highScore) {
         highScore = score;
-        localStorage.setItem('bb_real_high', highScore);
+        localStorage.setItem('bb_user_highscore', highScore);
         document.getElementById('highScoreText').innerText = highScore;
       }
     }
@@ -740,8 +745,4 @@
       if (!canFitAny) {
         setTimeout(() => {
           document.getElementById('finalScore').innerText = score;
-          document.getElementById('gameOverModal').classList.add('show');
-        }, 300);
-      }
-    }
-  </scri
+          document.g
