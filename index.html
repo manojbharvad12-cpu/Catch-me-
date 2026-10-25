@@ -3,742 +3,456 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#0f172a">
-  <title>Catch Me - Tic Tac Toe</title>
-
+  <title>Game Hub - Catch Me & Block Blast</title>
   <style>
     :root {
-      --bg-color: #0f172a;
-      --card-bg: #1e293b;
+      --bg: #0f172a;
+      --card: #1e293b;
       --primary: #38bdf8;
       --accent: #f43f5e;
-      --win-color: #22c55e;
+      --win: #22c55e;
+      --orange: #f97316;
       --text: #f8fafc;
-      --muted: #94a3b8;
     }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; font-family: -apple-system, sans-serif; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      user-select: none;
-      -webkit-user-select: none;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
-        Roboto, sans-serif;
-    }
+    /* VIEW MANAGEMENT */
+    .view { display: none; width: 100%; max-width: 400px; flex-direction: column; align-items: center; padding: 15px; }
+    .view.active { display: flex; }
 
-    body {
-      background: var(--bg-color);
-      color: var(--text);
-      min-height: 100vh;
-      min-height: 100dvh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow-x: hidden;
-      padding: 16px 0;
-    }
+    /* HOME SCREEN */
+    .hub-title { font-size: 32px; font-weight: 900; color: var(--primary); margin-bottom: 25px; text-shadow: 0 0 15px rgba(56,189,248,0.4); text-align: center; }
+    .game-card { width: 100%; background: var(--card); border: 2px solid rgba(255,255,255,0.1); border-radius: 18px; padding: 18px; margin-bottom: 16px; cursor: pointer; display: flex; align-items: center; gap: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.3); transition: transform 0.1s; }
+    .game-card:active { transform: scale(0.97); }
+    .game-icon { width: 55px; height: 55px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+    .card-info h3 { font-size: 19px; margin-bottom: 4px; }
+    .card-info p { font-size: 13px; color: #94a3b8; }
 
-    .game-container {
-      width: 100%;
-      max-width: 400px;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+    /* TOP BAR FOR GAMES */
+    .top-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .back-btn { background: #334155; border: none; color: white; padding: 6px 14px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+    .badges { display: flex; gap: 8px; }
+    .badge { background: var(--card); padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; border: 1px solid rgba(255,255,255,0.1); }
 
-    header {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 20px;
-    }
+    /* CATCH ME STYLES */
+    .board-ttt { width: 300px; height: 300px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; background: rgba(30,41,59,0.5); padding: 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); }
+    .cell-ttt { background: var(--card); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 44px; font-weight: 900; cursor: pointer; }
+    .cell-ttt.x { color: var(--primary); }
+    .cell-ttt.o { color: var(--accent); }
+    .cell-ttt.win { background: rgba(34,197,94,0.3); border: 2px solid var(--win); }
 
-    .title {
-      font-size: 25px;
-      font-weight: 900;
-      letter-spacing: 1px;
-      color: var(--primary);
-      text-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
-    }
+    /* BLOCK BLAST STYLES */
+    .grid-bb { width: 320px; height: 320px; display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); gap: 4px; background: #111827; padding: 6px; border-radius: 14px; border: 2px solid #334155; }
+    .cell-bb { background: #1e293b; border-radius: 4px; transition: background 0.15s; }
+    .cell-bb.filled { background: #38bdf8; box-shadow: inset 0 0 4px rgba(255,255,255,0.6); }
+    .cell-bb.highlight { background: rgba(56, 189, 248, 0.4); }
+    .dock-bb { width: 320px; min-height: 110px; display: flex; justify-content: space-around; align-items: center; margin-top: 15px; background: rgba(30,41,59,0.4); border-radius: 14px; padding: 10px; }
+    .dock-slot { display: flex; align-items: center; justify-content: center; width: 90px; height: 90px; cursor: grab; }
+    .shape-preview { display: grid; gap: 2px; }
+    .shape-tile { width: 16px; height: 16px; border-radius: 3px; background: #f97316; }
 
-    .stats-card {
-      display: flex;
-      gap: 8px;
-    }
-
-    .badge {
-      background: var(--card-bg);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      padding: 7px 10px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    .status-bar {
-      margin-bottom: 10px;
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--muted);
-      min-height: 24px;
-      text-align: center;
-    }
-
-    .difficulty {
-      color: var(--primary);
-      font-size: 13px;
-      font-weight: 700;
-      margin-bottom: 16px;
-      text-align: center;
-    }
-
-    .board {
-      width: min(320px, calc(100vw - 48px));
-      aspect-ratio: 1;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      grid-template-rows: repeat(3, 1fr);
-      gap: 10px;
-      background: rgba(30, 41, 59, 0.5);
-      padding: 10px;
-      border-radius: 20px;
-      border: 2px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
-    }
-
-    .cell {
-      background: var(--card-bg);
-      border: 0;
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: clamp(38px, 12vw, 48px);
-      font-weight: 900;
-      cursor: pointer;
-      transition: background 0.15s, transform 0.15s;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-      color: var(--text);
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .cell:active {
-      transform: scale(0.94);
-    }
-
-    .cell.x {
-      color: var(--primary);
-      text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
-    }
-
-    .cell.o {
-      color: var(--accent);
-      text-shadow: 0 0 10px rgba(244, 63, 94, 0.6);
-    }
-
-    .cell.win {
-      background: rgba(34, 197, 94, 0.25);
-      outline: 2px solid var(--win-color);
-      animation: pulse 0.8s infinite alternate;
-    }
-
-    .cell:disabled {
-      cursor: default;
-      opacity: 1;
-    }
-
-    @keyframes pulse {
-      from { transform: scale(1); }
-      to { transform: scale(1.04); }
-    }
-
-    .controls {
-      margin-top: 24px;
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      width: 100%;
-    }
-
-    .btn {
-      background: #2563eb;
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 800;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-      transition: transform 0.15s;
-    }
-
-    .btn:active {
-      transform: scale(0.96);
-    }
-
-    .btn-secondary {
-      background: #475569;
-    }
-
-    .help-text {
-      color: var(--muted);
-      font-size: 12px;
-      text-align: center;
-      margin-top: 18px;
-      line-height: 1.6;
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 10;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(5px);
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .modal.show {
-      display: flex;
-    }
-
-    .modal-content {
-      background: var(--card-bg);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 25px;
-      border-radius: 20px;
-      text-align: center;
-      width: 100%;
-      max-width: 310px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-    }
-
-    .modal-content h2 {
-      margin-bottom: 12px;
-      font-size: 23px;
-    }
-
-    .modal-content p {
-      color: var(--muted);
-      margin-bottom: 22px;
-      line-height: 1.6;
-      font-size: 14px;
-    }
-
-    .modal-content .btn {
-      width: 100%;
-    }
+    /* BUTTONS & MODAL */
+    .btn { background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 700; margin-top: 15px; cursor: pointer; }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 100; }
+    .modal.show { display: flex; }
+    .modal-box { background: var(--card); border: 1px solid rgba(255,255,255,0.1); padding: 25px; border-radius: 16px; width: 280px; text-align: center; }
   </style>
 </head>
-
 <body>
-  <main class="game-container">
 
-    <header>
-      <div class="title">CATCH ME</div>
-
-      <div class="stats-card">
-        <div class="badge" id="levelBadge">Lvl 1</div>
-        <div class="badge" id="scoreBadge">Win: 0</div>
+  <!-- 1. HOME SCREEN VIEW -->
+  <div class="view active" id="viewHome">
+    <div class="hub-title">GAME HUB</div>
+    
+    <div class="game-card" onclick="openGame('catchme')">
+      <div class="game-icon" style="background:#0284c7;">🎯</div>
+      <div class="card-info">
+        <h3>Catch Me</h3>
+        <p>Smart AI Tic-Tac-Toe • Level Progress</p>
       </div>
-    </header>
-
-    <div class="status-bar" id="statusBar" aria-live="polite">
-      Tamaro vaaro (X)
     </div>
 
-    <div class="difficulty" id="difficultyBadge">
-      Easy Mode
+    <div class="game-card" onclick="openGame('blockblast')">
+      <div class="game-icon" style="background:#ea580c;">🧱</div>
+      <div class="card-info">
+        <h3>Block Blast</h3>
+        <p>8x8 Grid Puzzle • Line Clearing</p>
+      </div>
     </div>
+  </div>
 
-    <div class="board" id="board" aria-label="Tic Tac Toe board">
-      <button class="cell" data-index="0" aria-label="Cell 1"></button>
-      <button class="cell" data-index="1" aria-label="Cell 2"></button>
-      <button class="cell" data-index="2" aria-label="Cell 3"></button>
-      <button class="cell" data-index="3" aria-label="Cell 4"></button>
-      <button class="cell" data-index="4" aria-label="Cell 5"></button>
-      <button class="cell" data-index="5" aria-label="Cell 6"></button>
-      <button class="cell" data-index="6" aria-label="Cell 7"></button>
-      <button class="cell" data-index="7" aria-label="Cell 8"></button>
-      <button class="cell" data-index="8" aria-label="Cell 9"></button>
+  <!-- 2. CATCH ME VIEW -->
+  <div class="view" id="viewCatchMe">
+    <div class="top-bar">
+      <button class="back-btn" onclick="goHome()">⬅ Menu</button>
+      <div class="badges">
+        <div class="badge" id="cmLvl">Lvl 1</div>
+        <div class="badge" id="cmWins">Win: 0</div>
+      </div>
     </div>
+    <div style="margin-bottom:12px;color:#94a3b8;font-weight:600;" id="cmStatus">Tamaro vaaro (X)</div>
+    <div class="board-ttt" id="boardTtt"></div>
+    <button class="btn" onclick="rstCatchMe()">Reset Round</button>
+  </div>
 
-    <div class="controls">
-      <button class="btn btn-secondary" id="resetBtn">
-        Reset Round
-      </button>
+  <!-- 3. BLOCK BLAST VIEW -->
+  <div class="view" id="viewBlockBlast">
+    <div class="top-bar">
+      <button class="back-btn" onclick="goHome()">⬅ Menu</button>
+      <div class="badges">
+        <div class="badge" id="bbScore">Score: 0</div>
+        <div class="badge" id="bbHigh">High: 0</div>
+      </div>
     </div>
+    <div class="grid-bb" id="gridBb"></div>
+    <div class="dock-bb" id="dockBb"></div>
+  </div>
 
-    <p class="help-text">
-      X = You &nbsp; | &nbsp; O = Computer<br>
-      Win the round to unlock your next level!
-    </p>
-
-  </main>
-
-  <div class="modal" id="resultModal" role="dialog"
-       aria-modal="true" aria-labelledby="modalTitle">
-
-    <div class="modal-content">
-      <h2 id="modalTitle">Victory!</h2>
-      <p id="modalMsg">Level Clear!</p>
-      <button class="btn" id="modalBtn">Next</button>
+  <!-- COMMON MODAL -->
+  <div class="modal" id="gameModal">
+    <div class="modal-box">
+      <h2 id="modalTitle" style="margin-bottom:10px;"></h2>
+      <p id="modalMsg" style="color:#94a3b8;margin-bottom:15px;font-size:14px;"></p>
+      <button class="btn" id="modalBtn" onclick="closeModal()">Continue</button>
     </div>
-
   </div>
 
   <script>
-    "use strict";
-
-    // =========================================
-    // SAVE DATA
-    // =========================================
-
-    function readSavedNumber(key, fallback, minimum) {
-      try {
-        const value = Number(localStorage.getItem(key));
-
-        if (
-          localStorage.getItem(key) !== null &&
-          Number.isSafeInteger(value) &&
-          value >= minimum
-        ) {
-          return value;
-        }
-      } catch (error) {
-        // Game can still work if storage is unavailable.
-      }
-
-      return fallback;
-    }
-
-    let currentLevel = Math.min(
-      readSavedNumber("catchme_level", 1, 1),
-      1000000
-    );
-
-    let totalWins = Math.min(
-      readSavedNumber("catchme_wins", 0, 0),
-      1000000000
-    );
-
-    function saveProgress() {
-      try {
-        localStorage.setItem("catchme_level", String(currentLevel));
-        localStorage.setItem("catchme_wins", String(totalWins));
-      } catch (error) {
-        // Gameplay remains available if saving fails.
+    // NAVIGATION
+    function openGame(game) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      if(game === 'catchme') {
+        document.getElementById('viewCatchMe').classList.add('active');
+        initCatchMe();
+      } else if(game === 'blockblast') {
+        document.getElementById('viewBlockBlast').classList.add('active');
+        initBlockBlast();
       }
     }
 
-    // =========================================
-    // GAME SETTINGS
-    // =========================================
+    function goHome() {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById('viewHome').classList.add('active');
+    }
 
-    const WINNING_LINES = [
-      [0, 1, 2],
-      [3, 4, 5],
-      [6, 7, 8],
-      [0, 3, 6],
-      [1, 4, 7],
-      [2, 5, 8],
-      [0, 4, 8],
-      [2, 4, 6]
+    function showModal(title, msg, btnText, callback) {
+      const modal = document.getElementById('gameModal');
+      document.getElementById('modalTitle').innerText = title;
+      document.getElementById('modalMsg').innerText = msg;
+      const btn = document.getElementById('modalBtn');
+      btn.innerText = btnText;
+      btn.onclick = () => { modal.classList.remove('show'); if(callback) callback(); };
+      modal.classList.add('show');
+    }
+
+    /* =================================================================
+       GAME 1: CATCH ME LOGIC
+       ================================================================= */
+    let cmBoard = Array(9).fill(null);
+    let cmActive = true;
+    let cmLevel = parseInt(localStorage.getItem('cm_lvl')) || 1;
+    let cmWinsCount = parseInt(localStorage.getItem('cm_win')) || 0;
+    const cmLines = [
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
     ];
 
-    let board = Array(9).fill(null);
-    let isGameActive = true;
-    let aiTimer = null;
-
-    const cells = Array.from(document.querySelectorAll(".cell"));
-    const statusBar = document.getElementById("statusBar");
-    const levelBadge = document.getElementById("levelBadge");
-    const scoreBadge = document.getElementById("scoreBadge");
-    const difficultyBadge = document.getElementById("difficultyBadge");
-
-    const resultModal = document.getElementById("resultModal");
-    const modalTitle = document.getElementById("modalTitle");
-    const modalMsg = document.getElementById("modalMsg");
-    const modalBtn = document.getElementById("modalBtn");
-
-    // =========================================
-    // DIFFICULTY
-    // Levels 1-5: Easy
-    // Levels 6+: Hard, but intentionally beatable
-    // =========================================
-
-    function getDifficulty() {
-      if (currentLevel <= 2) {
-        return {
-          name: "Easy Mode",
-          randomChance: 0.90
-        };
+    function initCatchMe() {
+      const bEl = document.getElementById('boardTtt');
+      bEl.innerHTML = '';
+      for(let i=0; i<9; i++) {
+        const c = document.createElement('div');
+        c.className = 'cell-ttt';
+        c.onclick = () => tapCatchMe(i);
+        bEl.appendChild(c);
       }
-
-      if (currentLevel <= 5) {
-        return {
-          name: "Easy+ Mode",
-          randomChance: 0.65
-        };
-      }
-
-      if (currentLevel <= 10) {
-        return {
-          name: "Hard Mode",
-          randomChance: 0.35
-        };
-      }
-
-      if (currentLevel <= 20) {
-        return {
-          name: "Very Hard Mode",
-          randomChance: 0.22
-        };
-      }
-
-      return {
-        name: "Expert Mode",
-        randomChance: 0.15
-      };
+      updCatchMeStats();
+      rstCatchMe();
     }
 
-    function updateHeader() {
-      levelBadge.textContent = `Lvl ${currentLevel}`;
-      scoreBadge.textContent = `Win: ${totalWins}`;
-      difficultyBadge.textContent = getDifficulty().name;
+    function updCatchMeStats() {
+      document.getElementById('cmLvl').innerText = "Lvl " + cmLevel;
+      document.getElementById('cmWins').innerText = "Win: " + cmWinsCount;
     }
 
-    // =========================================
-    // PLAYER MOVE
-    // =========================================
+    function tapCatchMe(i) {
+      if(!cmActive || cmBoard[i] !== null) return;
+      setCatchMeMove(i, 'X');
+      if(chkWin('X')) return endCatchMe('win');
+      if(cmBoard.every(x => x !== null)) return endCatchMe('draw');
 
-    cells.forEach((cell, index) => {
-      cell.addEventListener("click", () => {
-        handleCellClick(index);
-      });
-    });
-
-    document.getElementById("resetBtn").addEventListener("click", resetRound);
-    modalBtn.addEventListener("click", nextRoundAction);
-
-    function handleCellClick(index) {
-      if (!isGameActive || board[index] !== null) {
-        return;
-      }
-
-      applyMove(index, "X");
-
-      if (checkWinner("X")) {
-        handleEnd("win");
-        return;
-      }
-
-      if (board.every(value => value !== null)) {
-        handleEnd("draw");
-        return;
-      }
-
-      isGameActive = false;
-      setCellsDisabled(true);
-      statusBar.textContent = "Computer vichare chhe...";
-
-      aiTimer = setTimeout(() => {
-        aiTimer = null;
-        playAITurn();
-      }, 250);
+      cmActive = false;
+      document.getElementById('cmStatus').innerText = "Computer vichare chhe...";
+      setTimeout(aiCatchMe, 250);
     }
 
-    function applyMove(index, symbol) {
-      board[index] = symbol;
-
-      const cell = cells[index];
-      cell.textContent = symbol;
-      cell.classList.add(symbol.toLowerCase());
-      cell.disabled = true;
-      cell.setAttribute("aria-label", `Cell ${index + 1}: ${symbol}`);
+    function setCatchMeMove(i, s) {
+      cmBoard[i] = s;
+      const c = document.getElementById('boardTtt').children[i];
+      c.innerText = s;
+      c.classList.add(s.toLowerCase());
     }
 
-    function setCellsDisabled(disabled) {
-      cells.forEach((cell, index) => {
-        cell.disabled = disabled || board[index] !== null;
-      });
-    }
-
-    // =========================================
-    // AI MOVE
-    // =========================================
-
-    function playAITurn() {
-      if (board.every(value => value !== null)) {
-        handleEnd("draw");
-        return;
-      }
-
-      const difficulty = getDifficulty();
-
-      // Easy levels: often choose a random legal move.
-      // Hard levels: mostly use strategic Minimax.
-      let move;
-
-      if (Math.random() < difficulty.randomChance) {
-        move = chooseRandomMove();
-      } else {
-        move = getBestMove();
-      }
-
-      // Safety fallback: never make an invalid move.
-      if (move === -1 || board[move] !== null) {
-        move = chooseRandomMove();
-      }
-
-      if (move === -1) {
-        handleEnd("draw");
-        return;
-      }
-
-      applyMove(move, "O");
-
-      if (checkWinner("O")) {
-        handleEnd("lose");
-        return;
-      }
-
-      if (board.every(value => value !== null)) {
-        handleEnd("draw");
-        return;
-      }
-
-      isGameActive = true;
-      setCellsDisabled(false);
-      statusBar.textContent = "Tamaro vaaro (X)";
-    }
-
-    function chooseRandomMove() {
-      const emptySlots = [];
-
-      for (let i = 0; i < board.length; i++) {
-        if (board[i] === null) {
-          emptySlots.push(i);
+    function aiCatchMe() {
+      let m = findCmSlot('O'); // Win priority
+      if(m === null) m = findCmSlot('X'); // Mandatory block
+      if(m === null) {
+        if(cmBoard[4] === null) m = 4;
+        else {
+          let emp = []; cmBoard.forEach((v, idx) => { if(v === null) emp.push(idx); });
+          let crn = [0,2,6,8].filter(x => cmBoard[x] === null);
+          m = crn.length ? crn[Math.floor(Math.random()*crn.length)] : emp[Math.floor(Math.random()*emp.length)];
         }
       }
-
-      if (emptySlots.length === 0) {
-        return -1;
-      }
-
-      return emptySlots[
-        Math.floor(Math.random() * emptySlots.length)
-      ];
+      setCatchMeMove(m, 'O');
+      if(chkWin('O')) return endCatchMe('lose');
+      if(cmBoard.every(x => x !== null)) return endCatchMe('draw');
+      cmActive = true;
+      document.getElementById('cmStatus').innerText = "Tamaro vaaro (X)";
     }
 
-    // =========================================
-    // MINIMAX AI
-    // Simulates possible moves without changing
-    // the real board permanently.
-    // =========================================
-
-    function getBestMove() {
-      let bestScore = -Infinity;
-      let bestMoves = [];
-
-      for (let i = 0; i < 9; i++) {
-        if (board[i] !== null) {
-          continue;
-        }
-
-        board[i] = "O";
-        const score = minimax(board, 1, false);
-        board[i] = null;
-
-        if (score > bestScore) {
-          bestScore = score;
-          bestMoves = [i];
-        } else if (score === bestScore) {
-          bestMoves.push(i);
+    function findCmSlot(s) {
+      for(let [x,y,z] of cmLines) {
+        let v = [cmBoard[x], cmBoard[y], cmBoard[z]];
+        if(v.filter(val => val === s).length === 2 && v.filter(val => val === null).length === 1) {
+          if(cmBoard[x] === null) return x;
+          if(cmBoard[y] === null) return y;
+          if(cmBoard[z] === null) return z;
         }
       }
-
-      if (bestMoves.length === 0) {
-        return -1;
-      }
-
-      // Randomize equally good moves to avoid predictable play.
-      return bestMoves[
-        Math.floor(Math.random() * bestMoves.length)
-      ];
+      return null;
     }
 
-    function minimax(state, depth, maximizing) {
-      if (hasWinner(state, "O")) {
-        return 10 - depth;
-      }
-
-      if (hasWinner(state, "X")) {
-        return depth - 10;
-      }
-
-      if (state.every(value => value !== null)) {
-        return 0;
-      }
-
-      if (maximizing) {
-        let bestScore = -Infinity;
-
-        for (let i = 0; i < 9; i++) {
-          if (state[i] !== null) {
-            continue;
-          }
-
-          state[i] = "O";
-          const score = minimax(state, depth + 1, false);
-          state[i] = null;
-
-          bestScore = Math.max(bestScore, score);
-        }
-
-        return bestScore;
-      }
-
-      let bestScore = Infinity;
-
-      for (let i = 0; i < 9; i++) {
-        if (state[i] !== null) {
-          continue;
-        }
-
-        state[i] = "X";
-        const score = minimax(state, depth + 1, true);
-        state[i] = null;
-
-        bestScore = Math.min(bestScore, score);
-      }
-
-      return bestScore;
-    }
-
-    // =========================================
-    // WIN DETECTION
-    // =========================================
-
-    function hasWinner(state, symbol) {
-      return WINNING_LINES.some(([a, b, c]) =>
-        state[a] === symbol &&
-        state[b] === symbol &&
-        state[c] === symbol
-      );
-    }
-
-    function checkWinner(symbol) {
-      for (const [a, b, c] of WINNING_LINES) {
-        if (
-          board[a] === symbol &&
-          board[b] === symbol &&
-          board[c] === symbol
-        ) {
-          cells[a].classList.add("win");
-          cells[b].classList.add("win");
-          cells[c].classList.add("win");
+    function chkWin(s) {
+      for(let [x,y,z] of cmLines) {
+        if(cmBoard[x] === s && cmBoard[y] === s && cmBoard[z] === s) {
+          const ch = document.getElementById('boardTtt').children;
+          ch[x].classList.add('win'); ch[y].classList.add('win'); ch[z].classList.add('win');
           return true;
         }
       }
-
       return false;
     }
 
-    // =========================================
-    // ROUND RESULT
-    // =========================================
-
-    function handleEnd(result) {
-      isGameActive = false;
-      setCellsDisabled(true);
-
-      if (aiTimer !== null) {
-        clearTimeout(aiTimer);
-        aiTimer = null;
-      }
-
-      if (result === "win") {
-        const clearedLevel = currentLevel;
-
-        totalWins++;
-        currentLevel++;
-
-        saveProgress();
-        updateHeader();
-
-        modalTitle.textContent = "Superb Victory! 🎉";
-        modalTitle.style.color = "var(--win-color)";
-        modalMsg.textContent =
-          `Level ${clearedLevel} Clear! ` +
-          `Welcome to Level ${currentLevel}.`;
-        modalBtn.textContent = "Play Next Level";
-
-      } else if (result === "lose") {
-        modalTitle.textContent = "Computer Won! 🤖";
-        modalTitle.style.color = "var(--accent)";
-        modalMsg.textContent =
-          "Aa round tame hari gaya. Farithi try karo!";
-        modalBtn.textContent = "Try Again";
-
+    function endCatchMe(res) {
+      cmActive = false;
+      if(res === 'win') {
+        cmWinsCount++; cmLevel++;
+        localStorage.setItem('cm_lvl', cmLevel);
+        localStorage.setItem('cm_win', cmWinsCount);
+        updCatchMeStats();
+        showModal("Victory! 🎉", `Level ${cmLevel-1} Complete!`, "Next Level", rstCatchMe);
+      } else if(res === 'lose') {
+        showModal("Computer Won! 🤖", "Aa round tame hari gaya.", "Try Again", rstCatchMe);
       } else {
-        modalTitle.textContent = "Round Draw! 🤝";
-        modalTitle.style.color = "#fbbf24";
-        modalMsg.textContent =
-          "Draw thayo! Farithi ramvu padse.";
-        modalBtn.textContent = "Retry";
+        showModal("Draw! 🤝", "Round draw thayo.", "Retry", rstCatchMe);
       }
-
-      resultModal.classList.add("show");
-      modalBtn.focus();
     }
 
-    function nextRoundAction() {
-      resultModal.classList.remove("show");
-      resetRound();
+    function rstCatchMe() {
+      cmBoard = Array(9).fill(null);
+      const ch = document.getElementById('boardTtt').children;
+      for(let c of ch) { c.innerText = ''; c.className = 'cell-ttt'; }
+      cmActive = true;
+      document.getElementById('cmStatus').innerText = "Tamaro vaaro (X)";
     }
 
-    // =========================================
-    // RESET ROUND
-    // Does not erase saved level or total wins.
-    // =========================================
+    /* =================================================================
+       GAME 2: BLOCK BLAST LOGIC (8x8 Grid & Drag Blocks)
+       ================================================================= */
+    let bbGrid = Array(8).fill(null).map(() => Array(8).fill(0));
+    let bbScore = 0;
+    let bbHighScore = parseInt(localStorage.getItem('bb_high')) || 0;
+    let dockShapes = [null, null, null];
+    let selectedShapeIdx = null;
 
-    function resetRound() {
-      if (aiTimer !== null) {
-        clearTimeout(aiTimer);
-        aiTimer = null;
+    const SHAPES = [
+      [[1]], // 1x1
+      [[1,1]], // 1x2
+      [[1],[1]], // 2x1
+      [[1,1,1]], // 1x3
+      [[1],[1],[1]], // 3x1
+      [[1,1],[1,1]], // 2x2 Square
+      [[1,0],[1,0],[1,1]], // L shape
+      [[1,1,1],[0,1,0]] // T shape
+    ];
+
+    function initBlockBlast() {
+      bbScore = 0;
+      bbGrid = Array(8).fill(null).map(() => Array(8).fill(0));
+      document.getElementById('bbHigh').innerText = "High: " + bbHighScore;
+      document.getElementById('bbScore').innerText = "Score: 0";
+      
+      const gridEl = document.getElementById('gridBb');
+      gridEl.innerHTML = '';
+      for(let r=0; r<8; r++) {
+        for(let c=0; c<8; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell-bb';
+          cell.dataset.r = r;
+          cell.dataset.c = c;
+          cell.onclick = () => placeBlockOnGrid(r, c);
+          gridEl.appendChild(cell);
+        }
+      }
+      spawnDockShapes();
+      renderBbGrid();
+    }
+
+    function renderBbGrid() {
+      const cells = document.querySelectorAll('.cell-bb');
+      cells.forEach(cell => {
+        const r = parseInt(cell.dataset.r);
+        const c = parseInt(cell.dataset.c);
+        if(bbGrid[r][c] === 1) cell.classList.add('filled');
+        else cell.classList.remove('filled');
+      });
+    }
+
+    function spawnDockShapes() {
+      for(let i=0; i<3; i++) {
+        dockShapes[i] = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+      }
+      renderDock();
+    }
+
+    function renderDock() {
+      const dockEl = document.getElementById('dockBb');
+      dockEl.innerHTML = '';
+      dockShapes.forEach((shape, idx) => {
+        const slot = document.createElement('div');
+        slot.className = 'dock-slot';
+        if(selectedShapeIdx === idx) slot.style.background = 'rgba(56,189,248,0.2)';
+        
+        if(shape) {
+          const preview = document.createElement('div');
+          preview.className = 'shape-preview';
+          preview.style.gridTemplateColumns = `repeat(${shape[0].length}, 16px)`;
+          shape.forEach(row => {
+            row.forEach(val => {
+              const tile = document.createElement('div');
+              if(val) tile.className = 'shape-tile';
+              else tile.style.width = '16px', tile.style.height = '16px';
+              preview.appendChild(tile);
+            });
+          });
+          slot.appendChild(preview);
+          slot.onclick = () => selectShape(idx);
+        }
+        dockEl.appendChild(slot);
+      });
+    }
+
+    function selectShape(idx) {
+      if(!dockShapes[idx]) return;
+      selectedShapeIdx = idx;
+      renderDock();
+    }
+
+    function placeBlockOnGrid(r, c) {
+      if(selectedShapeIdx === null || !dockShapes[selectedShapeIdx]) return;
+      const shape = dockShapes[selectedShapeIdx];
+      const h = shape.length;
+      const w = shape[0].length;
+
+      // Fit check
+      if(r + h > 8 || c + w > 8) return;
+      for(let i=0; i<h; i++) {
+        for(let j=0; j<w; j++) {
+          if(shape[i][j] === 1 && bbGrid[r+i][c+j] === 1) return; // Overlap
+        }
       }
 
-      resultModal.classList.remove("show");
+      // Place block
+      let tilesPlaced = 0;
+      for(let i=0; i<h; i++) {
+        for(let j=0; j<w; j++) {
+          if(shape[i][j] === 1) {
+            bbGrid[r+i][c+j] = 1;
+            tilesPlaced++;
+          }
+        }
+      }
 
-      board = Array(9).fill(null);
-      isGameActive = true;
+      bbScore += tilesPlaced * 10;
+      dockShapes[selectedShapeIdx] = null;
+      selectedShapeIdx = null;
 
-      cells.forEach((cell, index) => {
-        cell.textContent = "";
-        cell.className = "cell";
-        cell.disabled = false;
-        cell.setAttribute("aria-label", `Cell ${index + 1}`);
+      clearFullLines();
+      renderBbGrid();
+
+      if(dockShapes.every(s => s === null)) {
+        spawnDockShapes();
+      } else {
+        renderDock();
+      }
+
+      checkBbGameOver();
+    }
+
+    function clearFullLines() {
+      let rowsToClear = [];
+      let colsToClear = [];
+
+      for(let r=0; r<8; r++) {
+        if(bbGrid[r].every(v => v === 1)) rowsToClear.push(r);
+      }
+      for(let c=0; c<8; c++) {
+        let full = true;
+        for(let r=0; r<8; r++) {
+          if(bbGrid[r][c] === 0) { full = false; break; }
+        }
+        if(full) colsToClear.push(c);
+      }
+
+      rowsToClear.forEach(r => bbGrid[r].fill(0));
+      colsToClear.forEach(c => {
+        for(let r=0; r<8; r++) bbGrid[r][c] = 0;
       });
 
-      statusBar.textContent = "Tamaro vaaro (X)";
-      updateHeader();
+      const clearedLines = rowsToClear.length + colsToClear.length;
+      if(clearedLines > 0) {
+        bbScore += clearedLines * 100;
+      }
+
+      if(bbScore > bbHighScore) {
+        bbHighScore = bbScore;
+        localStorage.setItem('bb_high', bbHighScore);
+      }
+
+      document.getElementById('bbScore').innerText = "Score: " + bbScore;
+      document.getElementById('bbHigh').innerText = "High: " + bbHighScore;
     }
 
-    // =========================================
-    // START GAME
-    // =========================================
+    function checkBbGameOver() {
+      const remaining = dockShapes.filter(s => s !== null);
+      let canPlaceAny = false;
 
-    updateHeader();
-    resetRound();
+      for(let shape of remaining) {
+        const h = shape.length;
+        const w = shape[0].length;
+        for(let r=0; r<=8-h; r++) {
+          for(let c=0; c<=8-w; c++) {
+            let fits = true;
+            for(let i=0; i<h; i++) {
+              for(let j=0; j<w; j++) {
+                if(shape[i][j] === 1 && bbGrid[r+i][c+j] === 1) { fits = false; break; }
+              }
+              if(!fits) break;
+            }
+            if(fits) { canPlaceAny = true; break; }
+          }
+          if(canPlaceAny) break;
+        }
+        if(canPlaceAny) break;
+      }
+
+      if(!canPlaceAny && remaining.length > 0) {
+        showModal("Game Over! 💥", `Tamaro final score: ${bbScore}`, "Play Again", initBlockBlast);
+      }
+    }
   </script>
 </body>
 </html>
