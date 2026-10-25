@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Block Blast Pro</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+    }
+
+    body {
+      background: #1e252b;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 14px;
+      overflow: hidden;
+    }
+
+    .top-nav {
+      width: 100%;
+      max-width: 360px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .hs-tag {
+      color: #ffd166;
+      font-size: 20px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-hub {
+      background: #334155;
+      border: none;
+      color: white;
+      padding: 6px 14px;
+      border-radius: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .score-banner {
+      font-size: 52px;
+      font-weight: 900;
+      color: #2ec4b6;
+      text-shadow: 0 4px 12px rgba(46, 196, 182, 0.4);
+      margin: 10px 0;
+    }
+
+    .grid-board {
+      width: 336px;
+      height: 336px;
+      background: #14181c;
+      border: 3px solid #333d47;
+      border-radius: 14px;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      grid-template-rows: repeat(8, 1fr);
+      gap: 3px;
+      padding: 4px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+
+    .grid-cell {
+      background: #252d35;
+      border-radius: 4px;
+      transition: background 0.08s;
+    }
+
+    .grid-cell.filled {
+      background: linear-gradient(135deg, #2ec4b6 0%, #0f9f90 100%);
+      box-shadow: inset 1px 1px 2px rgba(255,255,255,0.6), inset -1px -1px 2px rgba(0,0,0,0.4);
+    }
+
+    .grid-cell.preview-hover {
+      background: rgba(46, 196, 182, 0.55);
+      border: 1px solid #72efdd;
+    }
+
+    .grid-cell.clearing {
+      animation: blastFx 0.3s forwards;
+    }
+
+    @keyframes blastFx {
+      0% { transform: scale(1); background: #ffffff; }
+      50% { transform: scale(1.15); background: #70e000; }
+      100% { transform: scale(0); opacity: 0; }
+    }
+
+    .dock-holder {
+      width: 100%;
+      max-width: 360px;
+      height: 120px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      background: rgba(20, 24, 28, 0.4);
+      border-radius: 16px;
+      padding: 10px;
+    }
+
+    .dock-slot {
+      width: 95px;
+      height: 95px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .draggable-shape {
+      display: grid;
+      gap: 2px;
+      touch-action: none;
+      cursor: grab;
+    }
+
+    .block-unit {
+      width: 22px;
+      height: 22px;
+      background: linear-gradient(135deg, #2ec4b6 0%, #0f9f90 100%);
+      border-radius: 4px;
+      box-shadow: inset 1px 1px 2px rgba(255,255,255,0.5);
+    }
+
+    #dragGhost {
+      position: fixed;
+      pointer-events: none;
+      display: none;
+      z-index: 1000;
+      transform: translate(-50%, -50%);
+    }
+
+    #dragGhost .block-unit {
+      width: 38px;
+      height: 38px;
+    }
+
+    #dragGhost .draggable-shape {
+      gap: 3px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-nav">
+    <div class="hs-tag">👑 <span id="hsTxt">0</span></div>
+    <button class="btn-hub" onclick="location.href='index.html'">❮ Menu</button>
+  </div>
+
+  <div class="score-banner" id="scoreTxt">0</div>
+
+  <div class="grid-board" id="gameBoard"></div>
+
+  <div class="dock-holder" id="dock"></div>
+
+  <div id="dragGhost"></div>
+
+  <script>
+    let grid = Array(8).fill(null).map(() => Array(8).fill(0));
+    let score = 0;
+    let highScore = parseInt(localStorage.getItem('bb_pro_hs')) || 0;
+    let dockItems = [null, null, null];
+
+    // EASY SHAPES (Player ne high-score sudhi jaldi lai java mate)
+    const EASY_SHAPES = [
+      [[1]], // 1x1
+      [[1,1]], // 1x2
+      [[1],[1]], // 2x1
+      [[1,1,1]], // 1x3
+      [[1],[1],[1]], // 3x1
+      [[1,1],[1,1]] // 2x2
+    ];
+
+    // CHALLENGE SHAPES (High score pachhi player ne rokva ane challenge aapva mate)
+    const HARD_SHAPES = [
+      [[1,1,1,1]], // 4-line
+      [[1,0],[1,0],[1,1]], // L shape
+      [[1,1,1],[0,1,0]], // T shape
+      [[1,1,1],[1,1,1],[1,1,1]] // 3x3 big
+    ];
+
+    document.getElementById('hsTxt').innerText = highScore;
+
+    function initBoard() {
+      const b = document.getElementById('gameBoard');
+      b.innerHTML = '';
+      for(let r=0; r<8; r++) {
+        for(let c=0; c<8; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'grid-cell';
+          cell.dataset.r = r;
+          cell.dataset.c = c;
+          b.appendChild(cell);
+        }
+      }
+      spawnDock();
+    }
+    initBoard();
+
+    function spawnDock() {
+      for(let i=0; i<3; i++) {
+        // SMART LOGIC:
+        // Jo score high score thi niche hoy, to 80% Easy shapes aavse (fast high score pochase)
+        // High score paar karta 50% Challenge shapes aavse (puzzle interesting thase)
+        if(score < highScore || highScore === 0) {
+          dockItems[i] = (Math.random() < 0.85) 
+            ? EASY_SHAPES[Math.floor(Math.random() * EASY_SHAPES.length)]
+            : HARD_SHAPES[Math.floor(Math.random() * HARD_SHAPES.length)];
+        } else {
+          dockItems[i] = (Math.random() < 0.50)
+            ? EASY_SHAPES[Math.floor(Math.random() * EASY_SHAPES.length)]
+            : HARD_SHAPES[Math.floor(Math.random() * HARD_SHAPES.length)];
+        }
+      }
+      renderDock();
+    }
+
+    function renderDock() {
+      const d = document.getElementById('dock');
+      d.innerHTML = '';
+      dockItems.forEach((shape, idx) => {
+        const slot = document.createElement('div');
+        slot.className = 'dock-slot';
+        if(shape) {
+          const el = buildShapeEl(shape, 22);
+          bindDrag(el, idx, shape);
+          slot.appendChild(el);
+        }
+        d.appendChild(slot);
+      });
+    }
+
+    function buildShapeEl(matrix, size) {
+      const wrap = document.createElement('div');
+      wrap.className = 'draggable-shape';
+      wrap.style.gridTemplateColumns = `repeat(${matrix[0].length}, ${size}px)`;
+      matrix.forEach(row => {
+        row.forEach(val => {
+          const u = document.createElement('div');
+          if(val) {
+            u.className = 'block-unit';
+            u.style.width = size + 'px';
+            u.style.height = size + 'px';
+          } else {
+            u.style.width = size + 'px';
+            u.style.height = size + 'px';
+          }
+          wrap.appendChild(u);
+        });
+      });
+      return wrap;
+    }
+
+    // ACCURATE DRAG SYSTEM
+    let dragIdx = null;
+    let dragShape = null;
+    const ghost = document.getElementById('dragGhost');
+    const OFFSET_Y = 65;
+
+    function bindDrag(el, idx, matrix) {
+      el.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        dragIdx = idx;
+        dragShape = matrix;
+        ghost.innerHTML = '';
+        ghost.appendChild(buildShapeEl(matrix, 38));
+        ghost.style.display = 'block';
+        moveGhost(e.clientX, e.clientY - OFFSET_Y);
+        el.style.opacity = '0';
+      });
+    }
+
+    window.addEventListener('pointermove', (e) => {
+      if(dragIdx === null) return;
+      const y = e.clientY - OFFSET_Y;
+      moveGhost(e.clientX, y);
+      showHover(e.clientX, y);
+    });
+
+    window.addEventListener('pointerup', (e) => {
+      if(dragIdx === null) return;
+      const y = e.clientY - OFFSET_Y;
+      placeBlock(e.clientX, y);
+      ghost.style.display = 'none';
+      clearHover();
+      dragIdx = null;
+      dragShape = null;
+      renderDock();
+    });
+
+    function moveGhost(x, y) {
+      ghost.style.left = x + 'px';
+      ghost.style.top = y + 'px';
+    }
+
+    function getCoords(x, y) {
+      const rect = document.getElementById('gameBoard').getBoundingClientRect();
+      const cellSize = rect.width / 8;
+      const h = dragShape.length;
+      const w = dragShape[0].length;
+      const tlX = x - (w * cellSize) / 2;
+      const tlY = y - (h * cellSize) / 2;
+      const c = Math.round((tlX - rect.left) / cellSize);
+      const r = Math.round((tlY - rect.top) / cellSize);
+      return { r, c };
+    }
+
+    function canFit(matrix, r, c) {
+      if(r < 0 || c < 0 || r + matrix.length > 8 || c + matrix[0].length > 8) return false;
+      for(let i=0; i<matrix.length; i++) {
+        for(let j=0; j<matrix[0].length; j++) {
+          if(matrix[i][j] && grid[r+i][c+j] === 1) return false;
+        }
+      }
+      return true;
+    }
+
+    function showHover(x, y) {
+      clearHover();
+      const { r, c } = getCoords(x, y);
+      if(canFit(dragShape, r, c)) {
+        for(let i=0; i<dragShape.length; i++) {
+          for(let j=0; j<dragShape[0].length; j++) {
+            if(dragShape[i][j]) {
+              const cell = document.querySelector(`.grid-cell[data-r='${r+i}'][data-c='${c+j}']`);
+              if(cell) cell.classList.add('preview-hover');
+            }
+          }
+        }
+      }
+    }
+
+    function clearHover() {
+      document.querySelectorAll('.grid-cell.preview-hover').forEach(c => c.classList.remove('preview-hover'));
+    }
+
+    function placeBlock(x, y) {
+      const { r, c } = getCoords(x, y);
+      if(canFit(dragShape, r, c)) {
+        let placed = 0;
+        for(let i=0; i<dragShape.length; i++) {
+          for(let j=0; j<dragShape[0].length; j++) {
+            if(dragShape[i][j]) {
+              grid[r+i][c+j] = 1;
+              placed++;
+            }
+          }
+        }
+        dockItems[dragIdx] = null;
+        score += placed * 10;
+        updateScore();
+        renderGrid();
+        clearLines();
+
+        if(dockItems.every(s => s === null)) spawnDock();
+      }
+    }
+
+    function renderGrid() {
+      document.querySelectorAll('.grid-cell').forEach(c => {
+        const r = parseInt(c.dataset.r);
+        const col = parseInt(c.dataset.c);
+        if(grid[r][col] === 1) c.classList.add('filled');
+        else c.classList.remove('filled');
+      });
+    }
+
+    function clearLines() {
+      let rClear = [], cClear = [];
+      for(let r=0; r<8; r++) { if(grid[r].every(v => v === 1)) rClear.push(r); }
+      for(let c=0; c<8; c++) {
+        let fl = true;
+        for(let r=0; r<8; r++) { if(grid[r][c] === 0) { fl = false; break; } }
+        if(fl) cClear.push(c);
+      }
+
+      if(rClear.length + cClear.length > 0) {
+        rClear.forEach(r => grid[r].fill(0));
+        cClear.forEach(c => { for(let r=0; r<8; r++) grid[r][c] = 0; });
+        score += (rClear.length + cClear.length) * 120;
+        updateScore();
+        setTimeout(renderGrid, 200);
+      }
+    }
+
+    function updateScore() {
+      document.getElementById('scoreTxt').innerText = score;
+      if(score > highScore) {
+        highScore = score;
+        localStorage.setItem('bb_pro_hs', highScore);
+        document.getElementById('hsTxt').innerText = highScore;
+      }
+    }
+  </script>
+</body>
+</html>
