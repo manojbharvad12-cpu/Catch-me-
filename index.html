@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Catch Me</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --primary: #38bdf8;
+      --accent: #f43f5e;
+      --win-color: #22c55e;
+      --text: #f8fafc;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    .game-container {
+      width: 100%;
+      max-width: 400px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .title {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: var(--primary);
+      text-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+    }
+
+    .stats-card {
+      display: flex;
+      gap: 15px;
+    }
+
+    .badge {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .status-bar {
+      margin-bottom: 20px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #94a3b8;
+      min-height: 24px;
+    }
+
+    .board {
+      width: 320px;
+      height: 320px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 12px;
+      background: rgba(30, 41, 59, 0.5);
+      padding: 12px;
+      border-radius: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+    }
+
+    .cell {
+      background: var(--card-bg);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .cell:active {
+      transform: scale(0.94);
+    }
+
+    .cell.x {
+      color: var(--primary);
+      text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+    }
+
+    .cell.o {
+      color: var(--accent);
+      text-shadow: 0 0 10px rgba(244, 63, 94, 0.6);
+    }
+
+    .cell.win {
+      background: rgba(34, 197, 94, 0.25);
+      border: 2px solid var(--win-color);
+      animation: pulse 0.8s infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.05); }
+    }
+
+    .controls {
+      margin-top: 25px;
+      display: flex;
+      gap: 15px;
+    }
+
+    .btn {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+      transition: 0.2s;
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+    }
+
+    .btn-secondary {
+      background: #475569;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 24px;
+      border-radius: 20px;
+      text-align: center;
+      width: 100%;
+      max-width: 300px;
+    }
+
+    .modal-content h2 {
+      margin-bottom: 10px;
+      font-size: 22px;
+    }
+
+    .modal-content p {
+      color: #94a3b8;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="game-container">
+    <header>
+      <div class="title">CATCH ME</div>
+      <div class="stats-card">
+        <div class="badge" id="levelBadge">Lvl 1</div>
+        <div class="badge" id="scoreBadge">Win: 0</div>
+      </div>
+    </header>
+
+    <div class="status-bar" id="statusBar">Tamaro vaaro (X)</div>
+
+    <div class="board" id="board">
+      <div class="cell" data-index="0"></div>
+      <div class="cell" data-index="1"></div>
+      <div class="cell" data-index="2"></div>
+      <div class="cell" data-index="3"></div>
+      <div class="cell" data-index="4"></div>
+      <div class="cell" data-index="5"></div>
+      <div class="cell" data-index="6"></div>
+      <div class="cell" data-index="7"></div>
+      <div class="cell" data-index="8"></div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-secondary" onclick="resetRound()">Reset Round</button>
+    </div>
+  </div>
+
+  <div class="modal" id="resultModal">
+    <div class="modal-content">
+      <h2 id="modalTitle">Victory!</h2>
+      <p id="modalMsg">Level 1 Clear thai gayu!</p>
+      <button class="btn" id="modalBtn" onclick="nextRoundAction()">Next Level</button>
+    </div>
+  </div>
+
+  <script>
+    let currentLevel = parseInt(localStorage.getItem('catchme_level')) || 1;
+    let totalWins = parseInt(localStorage.getItem('catchme_wins')) || 0;
+    
+    let boardState = ["", "", "", "", "", "", "", "", ""];
+    let isGameActive = true;
+    let roundResult = null; // 'win', 'lose', 'draw'
+
+    const WIN_COMBOS = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8],
+      [0, 3, 6], [1, 4, 7], [2, 5, 8],
+      [0, 4, 8], [2, 4, 6]
+    ];
+
+    const cells = document.querySelectorAll('.cell');
+    const statusBar = document.getElementById('statusBar');
+    const levelBadge = document.getElementById('levelBadge');
+    const scoreBadge = document.getElementById('scoreBadge');
+    const resultModal = document.getElementById('resultModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalMsg = document.getElementById('modalMsg');
+    const modalBtn = document.getElementById('modalBtn');
+
+    function updateHeader() {
+      levelBadge.innerText = `Lvl ${currentLevel}`;
+      scoreBadge.innerText = `Win: ${totalWins}`;
+    }
+
+    cells.forEach(cell => {
+      cell.addEventListener('click', handleCellClick);
+    });
+
+    function handleCellClick(e) {
+      const idx = e.target.getAttribute('data-index');
+
+      if (boardState[idx] !== "" || !isGameActive) return;
+
+      // Player move (X)
+      makeMove(idx, "X");
+
+      if (checkWin("X")) {
+        handleEnd('win');
+        return;
+      }
+
+      if (isBoardFull()) {
+        handleEnd('draw');
+        return;
+      }
+
+      // AI move
+      isGameActive = false;
+      statusBar.innerText = "Computer vichare chhe...";
+      setTimeout(makeAIMove, 450);
+    }
+
+    function makeMove(index, symbol) {
+      boardState[index] = symbol;
+      const cell = cells[index];
+      cell.innerText = symbol;
+      cell.classList.add(symbol.toLowerCase());
+    }
+
+    // AI Logic (Levels pramane Difficulty vadhashe)
+    function makeAIMove() {
+      let emptyIndices = [];
+      boardState.forEach((val, idx) => {
+        if (val === "") emptyIndices.push(idx);
+      });
+
+      if (emptyIndices.length === 0) return;
+
+      let chosenIndex = null;
+
+      // Level 1: Pure Random (Sauthi saral)
+      if (currentLevel === 1) {
+        chosenIndex = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+      } 
+      // Level 2 to 4: Thodu smart (Jo potano win hase to leshe, baki 50% player ne block karse)
+      else if (currentLevel >= 2 && currentLevel <= 4) {
+        chosenIndex = findWinningMove("O"); // Potano win check
+        if (chosenIndex === null && Math.random() < 0.6) {
+          chosenIndex = findWinningMove("X"); // Player no win block
+        }
+        if (chosenIndex === null) {
+          chosenIndex = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+        }
+      } 
+      // Level 5 thi aagal: Smart Blocking pan beatable
+      else {
+        chosenIndex = findWinningMove("O"); // Win priority
+        if (chosenIndex === null) {
+          chosenIndex = findWinningMove("X"); // Always block player
+        }
+        if (chosenIndex === null && boardState[4] === "") {
+          chosenIndex = 4; // Center occupancy
+        }
+        if (chosenIndex === null) {
+          // Thoda mistakes rakhela chhe jethi game impossible na bane
+          if (Math.random() < 0.25) {
+            chosenIndex = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+          } else {
+            chosenIndex = emptyIndices[0];
+          }
+        }
+      }
+
+      makeMove(chosenIndex, "O");
+
+      if (checkWin("O")) {
+        handleEnd('lose');
+        return;
+      }
+
+      if (isBoardFull()) {
+        handleEnd('draw');
+        return;
+      }
+
+      isGameActive = true;
+      statusBar.innerText = "Tamaro vaaro (X)";
+    }
+
+    function findWinningMove(playerSymbol) {
+      for (let combo of WIN_COMBOS) {
+        const [a, b, c] = combo;
+        let line = [boardState[a], boardState[b], boardState[c]];
+        if (line.filter(val => val === playerSymbol).length === 2 && line.filter(val => val === "").length === 1) {
+          if (boardState[a] === "") return a;
+          if (boardState[b] === "") return b;
+          if (boardState[c] === "") return c;
+        }
+      }
+      return null;
+    }
+
+    function checkWin(symbol) {
+      for (let combo of WIN_COMBOS) {
+        const [a, b, c] = combo;
+        if (boardState[a] === symbol && boardState[b] === symbol && boardState[c] === symbol) {
+          cells[a].classList.add('win');
+          cells[b].classList.add('win');
+          cells[c].classList.add('win');
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function isBoardFull() {
+      return boardState.every(cell => cell !== "");
+    }
+
+    function handleEnd(result) {
+      isGameActive = false;
+      roundResult = result;
+
+      if (result === 'win') {
+        totalWins++;
+        currentLevel++;
+        localStorage.setItem('catchme_level', currentLevel);
+        localStorage.setItem('catchme_wins', totalWins);
+        updateHeader();
+
+        modalTitle.innerText = "Superb Victory! 🎉";
+        modalTitle.style.color = "var(--win-color)";
+        modalMsg.innerText = `Level ${currentLevel - 1} Clear! Have Level ${currentLevel} ma aavi gaya chho.`;
+        modalBtn.innerText = "Play Next Level";
+      } else if (result === 'lose') {
+        modalTitle.innerText = "Computer Won! 🤖";
+        modalTitle.style.color = "var(--accent)";
+        modalMsg.innerText = "Aa round tame hari gaya. Farithi prayas karo!";
+        modalBtn.innerText = "Try Again";
+      } else {
+        modalTitle.innerText = "Round Draw! 🤝";
+        modalTitle.style.color = "#fbbf24";
+        modalMsg.innerText = "Koi haru nahi. Farithi ramvu padse.";
+        modalBtn.innerText = "Retry";
+      }
+
+      resultModal.classList.add('show');
+    }
+
+    function nextRoundAction() {
+      resultModal.classList.remove('show');
+      resetRound();
+    }
+
+    function resetRound() {
+      boardState = ["", "", "", "", "", "", "", "", ""];
+      cells.forEach(cell => {
+        cell.innerText = "";
+        cell.className = "cell";
+      });
+      isGameActive = true;
+      statusBar.innerText = "Tamaro vaaro (X)";
+      updateHeader();
+    }
+
+    updateHeader();
+  </script>
+</body>
+</html>
