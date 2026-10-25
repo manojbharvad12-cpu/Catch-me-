@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Tic Tac Toe</title>
+  <title>Tic Tac Toe 3D</title>
   <style>
     * {
       box-sizing: border-box;
@@ -12,394 +12,397 @@
       user-select: none;
       -webkit-user-select: none;
       touch-action: manipulation;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: 'Arial Rounded MT Bold', -apple-system, sans-serif;
     }
 
     body {
-      background-color: #719bb6;
+      background: radial-gradient(circle at center, #1b5394 0%, #082952 100%);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
       padding: 16px 12px;
+      overflow: hidden;
     }
 
-    /* TOP HEADER BAR */
+    /* TOP STATS BAR (LUDO STYLE) */
     .top-bar {
       width: 100%;
-      max-width: 360px;
+      max-width: 380px;
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
     }
 
-    .nav-btn {
-      background: #ffffff;
-      border: none;
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
+    .pill-stat {
+      background: linear-gradient(180deg, #4c1d95 0%, #2e1065 100%);
+      border: 2px solid #ffd166;
+      border-radius: 20px;
+      padding: 4px 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #fff;
+      font-weight: 900;
+      font-size: 14px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    }
+
+    .btn-circle {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #ffd166 0%, #f77f00 100%);
+      border: 2px solid #fff;
+      box-shadow: 0 4px 0 #b35900, 0 6px 12px rgba(0,0,0,0.3);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 20px;
       cursor: pointer;
-      box-shadow: 0 4px 0 #567b93;
     }
 
-    .nav-btn:active {
+    .btn-circle:active {
       transform: translateY(2px);
-      box-shadow: 0 2px 0 #567b93;
+      box-shadow: 0 2px 0 #b35900;
     }
 
-    .scoreboard {
-      background: #ffffff;
-      border-radius: 24px;
-      display: flex;
-      align-items: center;
-      padding: 4px;
-      box-shadow: 0 4px 0 #567b93;
-      gap: 6px;
-    }
-
-    .score-pill {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-weight: 800;
-      font-size: 18px;
-    }
-
-    .score-p1 {
-      background: #e65c4f;
-      color: #fff;
-    }
-
-    .score-p2 {
-      background: #5c6b73;
-      color: #fff;
-    }
-
-    .vs-tag {
-      font-weight: 900;
-      font-size: 13px;
-      color: #1e293b;
-      padding: 0 4px;
-    }
-
-    /* MODE SELECTOR */
-    .mode-switch {
-      display: flex;
-      background: rgba(255, 255, 255, 0.4);
-      padding: 4px;
-      border-radius: 16px;
-      gap: 6px;
-      margin: 10px 0;
-    }
-
-    .mode-btn {
-      border: none;
-      background: transparent;
-      padding: 8px 16px;
-      border-radius: 12px;
-      font-weight: 800;
-      font-size: 13px;
-      color: #1e293b;
-      cursor: pointer;
-    }
-
-    .mode-btn.active {
-      background: #ffffff;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-    }
-
-    /* TURN INDICATOR & AVATARS */
-    .turn-bar {
+    /* MODE SELECTOR (LUDO STYLE BUTTONS) */
+    .mode-menu {
       width: 100%;
       max-width: 340px;
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 10px;
-      margin-bottom: 10px;
+      flex-direction: column;
+      gap: 12px;
+      margin: auto 0;
     }
 
-    .avatar-box {
+    .ludo-btn {
+      width: 100%;
+      height: 72px;
+      background: linear-gradient(180deg, #ffde59 0%, #ff914d 100%);
+      border: 3px solid #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 8px 0 #b24700, 0 12px 20px rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 16px;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.08s;
+    }
+
+    .ludo-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 4px 0 #b24700, 0 6px 10px rgba(0,0,0,0.4);
+    }
+
+    .ludo-btn-icon {
       width: 52px;
       height: 52px;
+      background: #004b93;
+      border: 2px solid #70d6ff;
       border-radius: 14px;
-      background: #4a5d6e;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 26px;
-      box-shadow: 0 4px 0 #313e4a;
-      transition: all 0.2s;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.5);
     }
 
-    .avatar-box.turn-active {
-      background: #ffffff;
-      transform: scale(1.08);
-      border: 3px solid #ff4d4d;
-      box-shadow: 0 0 15px rgba(255, 77, 77, 0.6);
+    .ludo-btn-text {
+      display: flex;
+      flex-direction: column;
+      text-align: left;
     }
 
-    .avatar-box.turn-active.blue-turn {
-      border-color: #2fb5ff;
-      box-shadow: 0 0 15px rgba(47, 181, 255, 0.6);
-    }
-
-    .turn-arrow {
-      font-size: 20px;
-      color: #ffffff;
+    .ludo-btn-text span:first-child {
+      font-size: 19px;
       font-weight: 900;
+      color: #ffffff;
+      text-shadow: 0 2px 4px #7a2e00, 0 0 2px #000;
+      letter-spacing: 0.5px;
     }
 
-    /* 3x3 GAME BOARD */
-    .board-frame {
-      width: 330px;
-      height: 330px;
-      background: #172b4d;
-      border-radius: 24px;
-      padding: 12px;
+    .ludo-btn-text span:last-child {
+      font-size: 12px;
+      color: #ffe6a7;
+      font-weight: 800;
+      text-shadow: 0 1px 2px #000;
+    }
+
+    /* GAMEPLAY BOARD VIEW */
+    #gameArea {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    .turn-status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .player-card {
+      background: #09264a;
+      border: 2px solid #38bdf8;
+      border-radius: 14px;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+      font-weight: 800;
+      font-size: 15px;
+      transition: 0.2s;
+    }
+
+    .player-card.active-turn {
+      border-color: #ffd166;
+      box-shadow: 0 0 14px #ffd166;
+      transform: scale(1.06);
+    }
+
+    .board-3d {
+      width: 320px;
+      height: 320px;
+      background: #091e3a;
+      border: 4px solid #1e3a8a;
+      border-radius: 22px;
+      padding: 10px;
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       grid-template-rows: repeat(3, 1fr);
-      gap: 10px;
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+      gap: 8px;
+      box-shadow: 0 14px 28px rgba(0,0,0,0.6);
     }
 
     .cell {
-      background: #233b5d;
-      border-radius: 16px;
+      background: #1e293b;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      position: relative;
-      transition: background 0.15s, transform 0.1s;
+      box-shadow: inset 0 3px 0 rgba(255,255,255,0.1), 0 4px 6px rgba(0,0,0,0.4);
     }
 
-    .cell:active {
-      transform: scale(0.96);
-    }
+    .cell:active { transform: scale(0.96); }
 
-    /* SVG NEON PIECES */
     .piece-x {
-      width: 65px;
-      height: 65px;
-      stroke: #ff4d4d;
+      width: 60px;
+      height: 60px;
+      stroke: #ef4444;
       stroke-width: 14;
       stroke-linecap: round;
-      filter: drop-shadow(0 0 8px rgba(255, 77, 77, 0.7));
-      animation: popPiece 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.8));
     }
 
     .piece-o {
-      width: 60px;
-      height: 60px;
+      width: 54px;
+      height: 54px;
       fill: none;
-      stroke: #2fb5ff;
+      stroke: #38bdf8;
       stroke-width: 14;
-      filter: drop-shadow(0 0 8px rgba(47, 181, 255, 0.7));
-      animation: popPiece 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    @keyframes popPiece {
-      0% { transform: scale(0.3); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
+      filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.8));
     }
 
     .cell.winning {
-      background: #204e79;
-      box-shadow: inset 0 0 15px rgba(47, 181, 255, 0.8);
+      background: #065f46;
+      animation: pulseWin 0.6s infinite alternate;
     }
 
-    /* FOOTER */
-    footer {
-      font-size: 13px;
-      color: #233b5d;
-      font-weight: 800;
-      letter-spacing: 2px;
+    @keyframes pulseWin {
+      from { transform: scale(1); }
+      to { transform: scale(1.04); }
     }
   </style>
 </head>
 <body>
 
-  <!-- TOP BAR -->
+  <!-- TOP HEADER -->
   <div class="top-bar">
-    <button class="nav-btn" onclick="location.href='index.html'">❮</button>
-    <div class="scoreboard">
-      <div class="score-pill score-p1">
-        <span>👤</span> <span id="scoreX">0</span>
-      </div>
-      <div class="vs-tag">VS</div>
-      <div class="score-pill score-p2">
-        <span id="p2Icon">🤖</span> <span id="scoreO">0</span>
+    <button class="btn-circle" onclick="goHome()">🏠</button>
+    <div class="pill-stat">
+      <span>🪙</span> <span id="coinVal">1250</span>
+    </div>
+    <div class="pill-stat">
+      <span>💎</span> <span>10</span>
+    </div>
+    <button class="btn-circle" onclick="resetGame()">🔄</button>
+  </div>
+
+  <!-- MODE SELECTION MENU -->
+  <div class="mode-menu" id="modeMenu">
+    <div class="ludo-btn" onclick="startMode('ai')">
+      <div class="ludo-btn-icon">🤖</div>
+      <div class="ludo-btn-text">
+        <span>VS COMPUTER</span>
+        <span>Smart AI Level Challenge</span>
       </div>
     </div>
-    <button class="nav-btn" onclick="resetBoard()">🔄</button>
+
+    <div class="ludo-btn" onclick="startMode('local')">
+      <div class="ludo-btn-icon">👥</div>
+      <div class="ludo-btn-text">
+        <span>LOCAL MULTIPLAYER</span>
+        <span>Pass & Play With Friends</span>
+      </div>
+    </div>
   </div>
 
-  <!-- MODE SELECTOR -->
-  <div class="mode-switch">
-    <button class="mode-btn active" id="btnModeAI" onclick="setMode('ai')">VS Computer (AI)</button>
-    <button class="mode-btn" id="btnModeLocal" onclick="setMode('local')">Local 2-Player</button>
+  <!-- GAME AREA -->
+  <div id="gameArea">
+    <div class="turn-status">
+      <div class="player-card active-turn" id="cardP1">
+        <span>👤</span> Player 1 (X)
+      </div>
+      <span style="color:#ffd166; font-weight:900;">VS</span>
+      <div class="player-card" id="cardP2">
+        <span id="p2Avatar">🤖</span> <span id="p2Name">Computer</span>
+      </div>
+    </div>
+
+    <div class="board-3d" id="boardGrid">
+      <div class="cell" onclick="cellTap(0)"></div>
+      <div class="cell" onclick="cellTap(1)"></div>
+      <div class="cell" onclick="cellTap(2)"></div>
+      <div class="cell" onclick="cellTap(3)"></div>
+      <div class="cell" onclick="cellTap(4)"></div>
+      <div class="cell" onclick="cellTap(5)"></div>
+      <div class="cell" onclick="cellTap(6)"></div>
+      <div class="cell" onclick="cellTap(7)"></div>
+      <div class="cell" onclick="cellTap(8)"></div>
+    </div>
   </div>
 
-  <!-- TURN BAR -->
-  <div class="turn-bar">
-    <div class="avatar-box turn-active" id="avP1">👤</div>
-    <div class="turn-arrow" id="turnArrow">◀</div>
-    <div class="avatar-box" id="avP2">🤖</div>
-  </div>
-
-  <!-- 3x3 BOARD -->
-  <div class="board-frame" id="board">
-    <div class="cell" onclick="cellTapped(0)"></div>
-    <div class="cell" onclick="cellTapped(1)"></div>
-    <div class="cell" onclick="cellTapped(2)"></div>
-    <div class="cell" onclick="cellTapped(3)"></div>
-    <div class="cell" onclick="cellTapped(4)"></div>
-    <div class="cell" onclick="cellTapped(5)"></div>
-    <div class="cell" onclick="cellTapped(6)"></div>
-    <div class="cell" onclick="cellTapped(7)"></div>
-    <div class="cell" onclick="cellTapped(8)"></div>
-  </div>
-
-  <footer>❖ Tic Tac Toe ❖</footer>
+  <div style="font-size:12px; color:#93c5fd; font-weight:800; letter-spacing:1px;">TIC TAC TOE 3D MASTER</div>
 
   <script>
-    let mode = 'ai'; // 'ai' athva 'local'
+    let mode = 'ai';
     let board = Array(9).fill(null);
-    let currentTurn = 'X'; // 'X' or 'O'
-    let isGameActive = true;
-    let scores = { X: 0, O: 0 };
+    let turn = 'X';
+    let active = true;
 
-    const WIN_LINES = [
+    const LINES = [
       [0,1,2],[3,4,5],[6,7,8],
       [0,3,6],[1,4,7],[2,5,8],
       [0,4,8],[2,4,6]
     ];
 
     const cells = document.querySelectorAll('.cell');
-    const avP1 = document.getElementById('avP1');
-    const avP2 = document.getElementById('avP2');
-    const turnArrow = document.getElementById('turnArrow');
-    const p2Icon = document.getElementById('p2Icon');
 
-    function setMode(newMode) {
-      mode = newMode;
-      document.getElementById('btnModeAI').classList.toggle('active', mode === 'ai');
-      document.getElementById('btnModeLocal').classList.toggle('active', mode === 'local');
-      avP2.innerText = (mode === 'ai') ? '🤖' : '👥';
-      p2Icon.innerText = (mode === 'ai') ? '🤖' : '👥';
-      scores = { X: 0, O: 0 };
-      updateScores();
-      resetBoard();
-    }
-
-    function cellTapped(idx) {
-      if (!isGameActive || board[idx] !== null) return;
-
-      placeMark(idx, currentTurn);
-
-      if (checkWin(currentTurn)) {
-        scores[currentTurn]++;
-        updateScores();
-        isGameActive = false;
-        setTimeout(resetBoard, 1200);
-        return;
-      }
-
-      if (board.every(c => c !== null)) {
-        isGameActive = false;
-        setTimeout(resetBoard, 900);
-        return;
-      }
-
-      // Turn Swap
-      if (mode === 'local') {
-        currentTurn = (currentTurn === 'X') ? 'O' : 'X';
-        updateTurnUI();
-      } else {
-        currentTurn = 'O';
-        updateTurnUI();
-        isGameActive = false;
-        setTimeout(playAITurn, 280);
-      }
-    }
-
-    function placeMark(idx, sym) {
-      board[idx] = sym;
-      const cell = cells[idx];
-      if (sym === 'X') {
-        cell.innerHTML = `
-          <svg class="piece-x" viewBox="0 0 100 100">
-            <line x1="20" y1="20" x2="80" y2="80"/>
-            <line x1="80" y1="20" x2="20" y2="80"/>
-          </svg>`;
-      } else {
-        cell.innerHTML = `
-          <svg class="piece-o" viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="32"/>
-          </svg>`;
-      }
-    }
-
-    function playAITurn() {
-      let move = scanWinningLine('O'); // Win priority
-      if (move === null) move = scanWinningLine('X'); // 100% Guaranteed Block
+    function startMode(m) {
+      mode = m;
+      document.getElementById('modeMenu').style.display = 'none';
+      document.getElementById('gameArea').style.display = 'flex';
       
-      if (move === null) {
-        if (board[4] === null) move = 4;
+      if(m === 'ai') {
+        document.getElementById('p2Avatar').innerText = '🤖';
+        document.getElementById('p2Name').innerText = 'Computer';
+      } else {
+        document.getElementById('p2Avatar').innerText = '👤';
+        document.getElementById('p2Name').innerText = 'Player 2 (O)';
+      }
+      resetGame();
+    }
+
+    function goHome() {
+      document.getElementById('gameArea').style.display = 'none';
+      document.getElementById('modeMenu').style.display = 'flex';
+    }
+
+    function cellTap(i) {
+      if(!active || board[i] !== null) return;
+
+      place(i, turn);
+
+      if(checkWinner(turn)) {
+        active = false;
+        setTimeout(resetGame, 1300);
+        return;
+      }
+
+      if(board.every(x => x !== null)) {
+        active = false;
+        setTimeout(resetGame, 900);
+        return;
+      }
+
+      if(mode === 'local') {
+        turn = (turn === 'X') ? 'O' : 'X';
+        updateTurnDisplay();
+      } else {
+        turn = 'O';
+        updateTurnDisplay();
+        active = false;
+        setTimeout(aiTurn, 260);
+      }
+    }
+
+    function place(i, s) {
+      board[i] = s;
+      const c = cells[i];
+      if(s === 'X') {
+        c.innerHTML = `<svg class="piece-x" viewBox="0 0 100 100"><line x1="20" y1="20" x2="80" y2="80"/><line x1="80" y1="20" x2="20" y2="80"/></svg>`;
+      } else {
+        c.innerHTML = `<svg class="piece-o" viewBox="0 0 100 100"><circle cx="50" cy="50" r="32"/></svg>`;
+      }
+    }
+
+    function aiTurn() {
+      let move = scanLine('O'); // Direct win
+      if(move === null) move = scanLine('X'); // 100% Guaranteed Block
+      
+      if(move === null) {
+        if(board[4] === null) move = 4;
         else {
-          const corners = [0, 2, 6, 8].filter(i => board[i] === null);
-          const empties = [];
-          board.forEach((v, i) => { if (v === null) empties.push(i); });
-          move = corners.length > 0 ? corners[Math.floor(Math.random() * corners.length)] : empties[Math.floor(Math.random() * empties.length)];
+          let emp = []; board.forEach((v, idx) => { if(v === null) emp.push(idx); });
+          let crn = [0,2,6,8].filter(x => board[x] === null);
+          move = crn.length ? crn[Math.floor(Math.random()*crn.length)] : emp[Math.floor(Math.random()*emp.length)];
         }
       }
 
-      placeMark(move, 'O');
+      place(move, 'O');
 
-      if (checkWin('O')) {
-        scores.O++;
-        updateScores();
-        isGameActive = false;
-        setTimeout(resetBoard, 1200);
+      if(checkWinner('O')) {
+        active = false;
+        setTimeout(resetGame, 1300);
         return;
       }
 
-      if (board.every(c => c !== null)) {
-        isGameActive = false;
-        setTimeout(resetBoard, 900);
+      if(board.every(x => x !== null)) {
+        active = false;
+        setTimeout(resetGame, 900);
         return;
       }
 
-      currentTurn = 'X';
-      updateTurnUI();
-      isGameActive = true;
+      turn = 'X';
+      updateTurnDisplay();
+      active = true;
     }
 
-    function scanWinningLine(sym) {
-      for (let [a, b, c] of WIN_LINES) {
-        const v = [board[a], board[b], board[c]];
-        if (v.filter(x => x === sym).length === 2 && v.filter(x => x === null).length === 1) {
-          if (board[a] === null) return a;
-          if (board[b] === null) return b;
-          if (board[c] === null) return c;
+    function scanLine(s) {
+      for(let [a,b,c] of LINES) {
+        let v = [board[a], board[b], board[c]];
+        if(v.filter(x => x === s).length === 2 && v.filter(x => x === null).length === 1) {
+          if(board[a] === null) return a;
+          if(board[b] === null) return b;
+          if(board[c] === null) return c;
         }
       }
       return null;
     }
 
-    function checkWin(sym) {
-      for (let [a, b, c] of WIN_LINES) {
-        if (board[a] === sym && board[b] === sym && board[c] === sym) {
+    function checkWinner(s) {
+      for(let [a,b,c] of LINES) {
+        if(board[a] === s && board[b] === s && board[c] === s) {
           cells[a].classList.add('winning');
           cells[b].classList.add('winning');
           cells[c].classList.add('winning');
@@ -409,34 +412,25 @@
       return false;
     }
 
-    function updateTurnUI() {
-      if (currentTurn === 'X') {
-        avP1.className = 'avatar-box turn-active';
-        avP2.className = 'avatar-box';
-        turnArrow.innerText = '◀';
+    function updateTurnDisplay() {
+      const p1 = document.getElementById('cardP1');
+      const p2 = document.getElementById('cardP2');
+      if(turn === 'X') {
+        p1.classList.add('active-turn');
+        p2.classList.remove('active-turn');
       } else {
-        avP1.className = 'avatar-box';
-        avP2.className = 'avatar-box turn-active blue-turn';
-        turnArrow.innerText = '▶';
+        p1.classList.remove('active-turn');
+        p2.classList.add('active-turn');
       }
     }
 
-    function updateScores() {
-      document.getElementById('scoreX').innerText = scores.X;
-      document.getElementById('scoreO').innerText = scores.O;
-    }
-
-    function resetBoard() {
+    function resetGame() {
       board = Array(9).fill(null);
-      cells.forEach(c => {
-        c.innerHTML = '';
-        c.className = 'cell';
-      });
-      currentTurn = 'X';
-      updateTurnUI();
-      isGameActive = true;
+      cells.forEach(c => { c.innerHTML = ''; c.className = 'cell'; });
+      turn = 'X';
+      updateTurnDisplay();
+      active = true;
     }
   </script>
 </body>
-  </html>
-  
+</html>
