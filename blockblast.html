@@ -26,7 +26,6 @@
       overflow: hidden;
     }
 
-    /* TOP BAR */
     .top-bar {
       width: 100%;
       max-width: 360px;
@@ -69,7 +68,6 @@
       margin-top: -6px;
     }
 
-    /* 8x8 GRID CONTAINER */
     .board-wrapper {
       width: 336px;
       height: 336px;
@@ -110,7 +108,6 @@
       100% { transform: scale(0); opacity: 0; }
     }
 
-    /* BOTTOM DOCK AREA (Center-Aligned) */
     .dock-wrapper {
       width: 100%;
       max-width: 360px;
@@ -146,7 +143,6 @@
       box-shadow: inset 1px 1px 2px rgba(255,255,255,0.5);
     }
 
-    /* DRAG FLOATING PREVIEW */
     #floatingDrag {
       position: fixed;
       pointer-events: none;
@@ -164,7 +160,6 @@
       gap: 3px;
     }
 
-    /* SETTINGS MODAL OVERLAY (Screenshot Style) */
     .settings-modal {
       display: none;
       position: fixed;
@@ -208,7 +203,6 @@
     .settings-title {
       font-size: 26px;
       font-weight: 900;
-      letter-spacing: 0.5px;
       margin-bottom: 22px;
       text-shadow: 0 2px 4px rgba(0,0,0,0.4);
     }
@@ -278,11 +272,33 @@
     .modal-menu-btn.settings-sub {
       background: linear-gradient(180deg, #25c025 0%, #16930d 100%);
     }
+
+    /* GAME OVER MODAL */
+    .game-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      align-items: center;
+      justify-content: center;
+      z-index: 2500;
+    }
+
+    .game-modal.show { display: flex; }
+
+    .modal-card {
+      background: #1f2326;
+      border: 2px solid #3a4146;
+      padding: 30px;
+      border-radius: 20px;
+      text-align: center;
+      width: 280px;
+      color: white;
+    }
   </style>
 </head>
 <body>
 
-  <!-- TOP BAR -->
   <div class="top-bar">
     <div class="hs-box">👑 <span id="hsTxt">0</span></div>
     <button class="gear-btn" onclick="openSettings()">⚙️</button>
@@ -290,16 +306,13 @@
 
   <div class="current-score" id="scoreTxt">0</div>
 
-  <!-- 8x8 BOARD -->
   <div class="board-wrapper" id="gameBoard"></div>
 
-  <!-- DOCK AREA -->
   <div class="dock-wrapper" id="dockHolder"></div>
 
-  <!-- FLOATING DRAG GHOST -->
   <div id="floatingDrag"></div>
 
-  <!-- SETTINGS MODAL (Screenshot Style) -->
+  <!-- SETTINGS MODAL -->
   <div class="settings-modal" id="settingsModal">
     <div class="settings-card">
       <button class="close-btn" onclick="closeSettings()">✕</button>
@@ -316,7 +329,6 @@
         </div>
       </div>
 
-      <!-- SEPARATE FILE REDIRECTS -->
       <button class="modal-menu-btn" onclick="location.href='achievements.html'">
         <span>🎖️</span> Medal
       </button>
@@ -326,8 +338,16 @@
     </div>
   </div>
 
+  <!-- GAME OVER MODAL -->
+  <div class="game-modal" id="gameOverModal">
+    <div class="modal-card">
+      <h2 style="color:#ff4d6d; margin-bottom:10px;">Game Over!</h2>
+      <p style="margin-bottom:20px; font-size:16px;">Score: <span id="finalScore">0</span></p>
+      <button class="modal-menu-btn" style="justify-content:center;" onclick="restartGame()">Play Again</button>
+    </div>
+  </div>
+
   <script>
-    // AUDIO ENGINE
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     let isSoundOn = localStorage.getItem('bb_sound') !== 'false';
     let isBgmOn = localStorage.getItem('bb_bgm') !== 'false';
@@ -348,7 +368,6 @@
       } catch(e){}
     }
 
-    // GAME STATE
     let grid = Array(8).fill(null).map(() => Array(8).fill(0));
     let score = 0;
     let highScore = parseInt(localStorage.getItem('bb_user_highscore')) || 0;
@@ -375,9 +394,23 @@
           b.appendChild(cell);
         }
       }
+      restartGame();
+    }
+
+    // GAME START & ROUND TRACKING
+    function restartGame() {
+      document.getElementById('gameOverModal').classList.remove('show');
+      grid = Array(8).fill(null).map(() => Array(8).fill(0));
+      score = 0;
+      updateScore();
+      renderGrid();
+
+      // Real rounds tracking for Achievement screen
+      let totalRounds = parseInt(localStorage.getItem('bb_total_rounds')) || 0;
+      localStorage.setItem('bb_total_rounds', totalRounds + 1);
+
       spawnDock();
     }
-    initBoard();
 
     function spawnDock() {
       for (let i = 0; i < 3; i++) {
@@ -392,6 +425,7 @@
         }
       }
       renderDock();
+      checkGameOver();
     }
 
     function renderDock() {
@@ -430,7 +464,6 @@
       return wrap;
     }
 
-    // ACCURATE TOUCH & DRAG
     let dragIdx = null;
     let dragShape = null;
     const floating = document.getElementById('floatingDrag');
@@ -533,7 +566,11 @@
         renderGrid();
         clearLines();
 
-        if (dockItems.every(s => s === null)) spawnDock();
+        if (dockItems.every(s => s === null)) {
+          spawnDock();
+        } else {
+          checkGameOver();
+        }
       }
     }
 
@@ -546,6 +583,7 @@
       });
     }
 
+    // LINE CLEARING, COMBO & STATS UPDATE
     function clearLines() {
       let rClear = [], cClear = [];
       for (let r = 0; r < 8; r++) { if (grid[r].every(v => v === 1)) rClear.push(r); }
@@ -555,12 +593,24 @@
         if (fl) cClear.push(c);
       }
 
-      if (rClear.length + cClear.length > 0) {
+      const totalLines = rClear.length + cClear.length;
+      if (totalLines > 0) {
         rClear.forEach(r => grid[r].fill(0));
         cClear.forEach(c => { for (let r = 0; r < 8; r++) grid[r][c] = 0; });
-        score += (rClear.length + cClear.length) * 120;
+        score += totalLines * 120;
         playTone(650, 'triangle', 0.25);
         updateScore();
+
+        // 1. Combo Tracking
+        let curMaxCombo = parseInt(localStorage.getItem('bb_max_combo')) || 0;
+        if (totalLines > curMaxCombo) {
+          localStorage.setItem('bb_max_combo', totalLines);
+        }
+
+        // 2. Total Lines Cleared Tracking
+        let totalCleared = parseInt(localStorage.getItem('bb_total_cleared')) || 0;
+        localStorage.setItem('bb_total_cleared', totalCleared + totalLines);
+
         setTimeout(renderGrid, 200);
       }
     }
@@ -574,7 +624,32 @@
       }
     }
 
-    // SETTINGS MODAL LOGIC
+    function checkGameOver() {
+      const remaining = dockItems.filter(s => s !== null);
+      if (remaining.length === 0) return;
+
+      let canFitAny = false;
+      for (let shape of remaining) {
+        for (let r = 0; r < 8; r++) {
+          for (let c = 0; c < 8; c++) {
+            if (canFit(shape, r, c)) {
+              canFitAny = true;
+              break;
+            }
+          }
+          if (canFitAny) break;
+        }
+        if (canFitAny) break;
+      }
+
+      if (!canFitAny) {
+        setTimeout(() => {
+          document.getElementById('finalScore').innerText = score;
+          document.getElementById('gameOverModal').classList.add('show');
+        }, 300);
+      }
+    }
+
     function openSettings() {
       document.getElementById('settingsModal').classList.add('active');
       document.getElementById('soundBox').innerText = isSoundOn ? '🔊' : '🔇';
@@ -596,6 +671,8 @@
       localStorage.setItem('bb_bgm', isBgmOn);
       document.getElementById('bgmBox').innerText = isBgmOn ? '🎵' : '🔇';
     }
+
+    window.onload = initBoard;
   </script>
 </body>
 </html>
