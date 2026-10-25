@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Catch Me</title>
+  <meta name="theme-color" content="#0f172a">
+  <title>Catch Me - Tic Tac Toe</title>
+
   <style>
     :root {
       --bg-color: #0f172a;
@@ -12,6 +14,7 @@
       --accent: #f43f5e;
       --win-color: #22c55e;
       --text: #f8fafc;
+      --muted: #94a3b8;
     }
 
     * {
@@ -20,18 +23,20 @@
       padding: 0;
       user-select: none;
       -webkit-user-select: none;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, sans-serif;
     }
 
     body {
-      background-color: var(--bg-color);
+      background: var(--bg-color);
       color: var(--text);
+      min-height: 100vh;
+      min-height: 100dvh;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      overflow: hidden;
+      overflow-x: hidden;
+      padding: 16px 0;
     }
 
     .game-container {
@@ -48,12 +53,13 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 8px;
       margin-bottom: 20px;
     }
 
     .title {
-      font-size: 26px;
-      font-weight: 800;
+      font-size: 25px;
+      font-weight: 900;
       letter-spacing: 1px;
       color: var(--primary);
       text-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
@@ -61,35 +67,45 @@
 
     .stats-card {
       display: flex;
-      gap: 15px;
+      gap: 8px;
     }
 
     .badge {
       background: var(--card-bg);
       border: 1px solid rgba(255, 255, 255, 0.1);
-      padding: 6px 14px;
+      padding: 7px 10px;
       border-radius: 20px;
-      font-size: 14px;
-      font-weight: 600;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
     }
 
     .status-bar {
-      margin-bottom: 20px;
+      margin-bottom: 10px;
       font-size: 16px;
-      font-weight: 600;
-      color: #94a3b8;
+      font-weight: 700;
+      color: var(--muted);
       min-height: 24px;
+      text-align: center;
+    }
+
+    .difficulty {
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      text-align: center;
     }
 
     .board {
-      width: 320px;
-      height: 320px;
+      width: min(320px, calc(100vw - 48px));
+      aspect-ratio: 1;
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       grid-template-rows: repeat(3, 1fr);
-      gap: 12px;
+      gap: 10px;
       background: rgba(30, 41, 59, 0.5);
-      padding: 12px;
+      padding: 10px;
       border-radius: 20px;
       border: 2px solid rgba(255, 255, 255, 0.08);
       box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
@@ -97,15 +113,18 @@
 
     .cell {
       background: var(--card-bg);
+      border: 0;
       border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 48px;
+      font-size: clamp(38px, 12vw, 48px);
       font-weight: 900;
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: background 0.15s, transform 0.15s;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      color: var(--text);
+      -webkit-tap-highlight-color: transparent;
     }
 
     .cell:active {
@@ -124,32 +143,39 @@
 
     .cell.win {
       background: rgba(34, 197, 94, 0.25);
-      border: 2px solid var(--win-color);
+      outline: 2px solid var(--win-color);
       animation: pulse 0.8s infinite alternate;
+    }
+
+    .cell:disabled {
+      cursor: default;
+      opacity: 1;
     }
 
     @keyframes pulse {
       from { transform: scale(1); }
-      to { transform: scale(1.05); }
+      to { transform: scale(1.04); }
     }
 
     .controls {
-      margin-top: 25px;
+      margin-top: 24px;
       display: flex;
-      gap: 15px;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
     }
 
     .btn {
       background: #2563eb;
       color: white;
       border: none;
-      padding: 12px 24px;
+      padding: 12px 20px;
       border-radius: 12px;
-      font-size: 15px;
-      font-weight: 700;
+      font-size: 14px;
+      font-weight: 800;
       cursor: pointer;
       box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-      transition: 0.2s;
+      transition: transform 0.15s;
     }
 
     .btn:active {
@@ -160,12 +186,21 @@
       background: #475569;
     }
 
+    .help-text {
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      margin-top: 18px;
+      line-height: 1.6;
+    }
+
     .modal {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(4px);
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(5px);
       align-items: center;
       justify-content: center;
       padding: 20px;
@@ -178,262 +213,532 @@
     .modal-content {
       background: var(--card-bg);
       border: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 24px;
+      padding: 25px;
       border-radius: 20px;
       text-align: center;
       width: 100%;
-      max-width: 300px;
+      max-width: 310px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
     }
 
     .modal-content h2 {
-      margin-bottom: 10px;
-      font-size: 22px;
+      margin-bottom: 12px;
+      font-size: 23px;
     }
 
     .modal-content p {
-      color: #94a3b8;
-      margin-bottom: 20px;
+      color: var(--muted);
+      margin-bottom: 22px;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .modal-content .btn {
+      width: 100%;
     }
   </style>
 </head>
-<body>
 
-  <div class="game-container">
+<body>
+  <main class="game-container">
+
     <header>
       <div class="title">CATCH ME</div>
+
       <div class="stats-card">
         <div class="badge" id="levelBadge">Lvl 1</div>
         <div class="badge" id="scoreBadge">Win: 0</div>
       </div>
     </header>
 
-    <div class="status-bar" id="statusBar">Tamaro vaaro (X)</div>
+    <div class="status-bar" id="statusBar" aria-live="polite">
+      Tamaro vaaro (X)
+    </div>
 
-    <div class="board" id="board">
-      <div class="cell" data-index="0"></div>
-      <div class="cell" data-index="1"></div>
-      <div class="cell" data-index="2"></div>
-      <div class="cell" data-index="3"></div>
-      <div class="cell" data-index="4"></div>
-      <div class="cell" data-index="5"></div>
-      <div class="cell" data-index="6"></div>
-      <div class="cell" data-index="7"></div>
-      <div class="cell" data-index="8"></div>
+    <div class="difficulty" id="difficultyBadge">
+      Easy Mode
+    </div>
+
+    <div class="board" id="board" aria-label="Tic Tac Toe board">
+      <button class="cell" data-index="0" aria-label="Cell 1"></button>
+      <button class="cell" data-index="1" aria-label="Cell 2"></button>
+      <button class="cell" data-index="2" aria-label="Cell 3"></button>
+      <button class="cell" data-index="3" aria-label="Cell 4"></button>
+      <button class="cell" data-index="4" aria-label="Cell 5"></button>
+      <button class="cell" data-index="5" aria-label="Cell 6"></button>
+      <button class="cell" data-index="6" aria-label="Cell 7"></button>
+      <button class="cell" data-index="7" aria-label="Cell 8"></button>
+      <button class="cell" data-index="8" aria-label="Cell 9"></button>
     </div>
 
     <div class="controls">
-      <button class="btn btn-secondary" onclick="resetRound()">Reset Round</button>
+      <button class="btn btn-secondary" id="resetBtn">
+        Reset Round
+      </button>
     </div>
-  </div>
 
-  <div class="modal" id="resultModal">
+    <p class="help-text">
+      X = You &nbsp; | &nbsp; O = Computer<br>
+      Win the round to unlock your next level!
+    </p>
+
+  </main>
+
+  <div class="modal" id="resultModal" role="dialog"
+       aria-modal="true" aria-labelledby="modalTitle">
+
     <div class="modal-content">
       <h2 id="modalTitle">Victory!</h2>
       <p id="modalMsg">Level Clear!</p>
-      <button class="btn" id="modalBtn" onclick="nextRoundAction()">Next</button>
+      <button class="btn" id="modalBtn">Next</button>
     </div>
+
   </div>
 
   <script>
-    let currentLevel = parseInt(localStorage.getItem('catchme_level')) || 1;
-    let totalWins = parseInt(localStorage.getItem('catchme_wins')) || 0;
-    
-    // Board representation: array of 9 elements (null or 'X' or 'O')
-    let board = Array(9).fill(null);
-    let isGameActive = true;
+    "use strict";
 
-    const WINNING_LINES = [
-      [0, 1, 2], // Row 1
-      [3, 4, 5], // Row 2
-      [6, 7, 8], // Row 3
-      [0, 3, 6], // Col 1
-      [1, 4, 7], // Col 2
-      [2, 5, 8], // Col 3 (Loop-hole fix)
-      [0, 4, 8], // Diag 1
-      [2, 4, 6]  // Diag 2
-    ];
+    // =========================================
+    // SAVE DATA
+    // =========================================
 
-    const cells = document.querySelectorAll('.cell');
-    const statusBar = document.getElementById('statusBar');
-    const levelBadge = document.getElementById('levelBadge');
-    const scoreBadge = document.getElementById('scoreBadge');
-    const resultModal = document.getElementById('resultModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalMsg = document.getElementById('modalMsg');
-    const modalBtn = document.getElementById('modalBtn');
+    function readSavedNumber(key, fallback, minimum) {
+      try {
+        const value = Number(localStorage.getItem(key));
 
-    function updateHeader() {
-      levelBadge.innerText = `Lvl ${currentLevel}`;
-      scoreBadge.innerText = `Win: ${totalWins}`;
+        if (
+          localStorage.getItem(key) !== null &&
+          Number.isSafeInteger(value) &&
+          value >= minimum
+        ) {
+          return value;
+        }
+      } catch (error) {
+        // Game can still work if storage is unavailable.
+      }
+
+      return fallback;
     }
 
-    cells.forEach((cell, idx) => {
-      cell.addEventListener('click', () => handleCellClick(idx));
+    let currentLevel = Math.min(
+      readSavedNumber("catchme_level", 1, 1),
+      1000000
+    );
+
+    let totalWins = Math.min(
+      readSavedNumber("catchme_wins", 0, 0),
+      1000000000
+    );
+
+    function saveProgress() {
+      try {
+        localStorage.setItem("catchme_level", String(currentLevel));
+        localStorage.setItem("catchme_wins", String(totalWins));
+      } catch (error) {
+        // Gameplay remains available if saving fails.
+      }
+    }
+
+    // =========================================
+    // GAME SETTINGS
+    // =========================================
+
+    const WINNING_LINES = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [0, 4, 8],
+      [2, 4, 6]
+    ];
+
+    let board = Array(9).fill(null);
+    let isGameActive = true;
+    let aiTimer = null;
+
+    const cells = Array.from(document.querySelectorAll(".cell"));
+    const statusBar = document.getElementById("statusBar");
+    const levelBadge = document.getElementById("levelBadge");
+    const scoreBadge = document.getElementById("scoreBadge");
+    const difficultyBadge = document.getElementById("difficultyBadge");
+
+    const resultModal = document.getElementById("resultModal");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalMsg = document.getElementById("modalMsg");
+    const modalBtn = document.getElementById("modalBtn");
+
+    // =========================================
+    // DIFFICULTY
+    // Levels 1-5: Easy
+    // Levels 6+: Hard, but intentionally beatable
+    // =========================================
+
+    function getDifficulty() {
+      if (currentLevel <= 2) {
+        return {
+          name: "Easy Mode",
+          randomChance: 0.90
+        };
+      }
+
+      if (currentLevel <= 5) {
+        return {
+          name: "Easy+ Mode",
+          randomChance: 0.65
+        };
+      }
+
+      if (currentLevel <= 10) {
+        return {
+          name: "Hard Mode",
+          randomChance: 0.35
+        };
+      }
+
+      if (currentLevel <= 20) {
+        return {
+          name: "Very Hard Mode",
+          randomChance: 0.22
+        };
+      }
+
+      return {
+        name: "Expert Mode",
+        randomChance: 0.15
+      };
+    }
+
+    function updateHeader() {
+      levelBadge.textContent = `Lvl ${currentLevel}`;
+      scoreBadge.textContent = `Win: ${totalWins}`;
+      difficultyBadge.textContent = getDifficulty().name;
+    }
+
+    // =========================================
+    // PLAYER MOVE
+    // =========================================
+
+    cells.forEach((cell, index) => {
+      cell.addEventListener("click", () => {
+        handleCellClick(index);
+      });
     });
 
-    function handleCellClick(idx) {
-      if (!isGameActive || board[idx] !== null) return;
+    document.getElementById("resetBtn").addEventListener("click", resetRound);
+    modalBtn.addEventListener("click", nextRoundAction);
 
-      // 1. Player move
-      applyMove(idx, 'X');
-
-      if (checkWinner('X')) {
-        handleEnd('win');
+    function handleCellClick(index) {
+      if (!isGameActive || board[index] !== null) {
         return;
       }
 
-      if (board.every(cell => cell !== null)) {
-        handleEnd('draw');
+      applyMove(index, "X");
+
+      if (checkWinner("X")) {
+        handleEnd("win");
         return;
       }
 
-      // 2. AI Turn
+      if (board.every(value => value !== null)) {
+        handleEnd("draw");
+        return;
+      }
+
       isGameActive = false;
-      statusBar.innerText = "Computer vichare chhe...";
-      setTimeout(playAITurn, 260);
+      setCellsDisabled(true);
+      statusBar.textContent = "Computer vichare chhe...";
+
+      aiTimer = setTimeout(() => {
+        aiTimer = null;
+        playAITurn();
+      }, 250);
     }
 
     function applyMove(index, symbol) {
       board[index] = symbol;
+
       const cell = cells[index];
-      cell.innerText = symbol;
+      cell.textContent = symbol;
       cell.classList.add(symbol.toLowerCase());
+      cell.disabled = true;
+      cell.setAttribute("aria-label", `Cell ${index + 1}: ${symbol}`);
     }
 
-    function playAITurn() {
-      const emptySlots = [];
-      board.forEach((val, i) => {
-        if (val === null) emptySlots.push(i);
+    function setCellsDisabled(disabled) {
+      cells.forEach((cell, index) => {
+        cell.disabled = disabled || board[index] !== null;
       });
+    }
 
-      if (emptySlots.length === 0) return;
+    // =========================================
+    // AI MOVE
+    // =========================================
 
-      let move = null;
-
-      // PRIORITY 1: Can AI Win right now?
-      move = scanForWinningSlot('O');
-
-      // PRIORITY 2: CRITICAL BLOCK -> Does Player have 2 in a row? BLOCK IMMEDIATELY!
-      if (move === null) {
-        move = scanForWinningSlot('X');
-      }
-
-      // PRIORITY 3: Strategic Center or Corners
-      if (move === null) {
-        if (board[4] === null) {
-          move = 4; // Center
-        } else {
-          const corners = [0, 2, 6, 8].filter(i => board[i] === null);
-          if (corners.length > 0) {
-            move = corners[Math.floor(Math.random() * corners.length)];
-          } else {
-            move = emptySlots[Math.floor(Math.random() * emptySlots.length)];
-          }
-        }
-      }
-
-      // Apply AI Move
-      applyMove(move, 'O');
-
-      if (checkWinner('O')) {
-        handleEnd('lose');
+    function playAITurn() {
+      if (board.every(value => value !== null)) {
+        handleEnd("draw");
         return;
       }
 
-      if (board.every(cell => cell !== null)) {
-        handleEnd('draw');
+      const difficulty = getDifficulty();
+
+      // Easy levels: often choose a random legal move.
+      // Hard levels: mostly use strategic Minimax.
+      let move;
+
+      if (Math.random() < difficulty.randomChance) {
+        move = chooseRandomMove();
+      } else {
+        move = getBestMove();
+      }
+
+      // Safety fallback: never make an invalid move.
+      if (move === -1 || board[move] !== null) {
+        move = chooseRandomMove();
+      }
+
+      if (move === -1) {
+        handleEnd("draw");
+        return;
+      }
+
+      applyMove(move, "O");
+
+      if (checkWinner("O")) {
+        handleEnd("lose");
+        return;
+      }
+
+      if (board.every(value => value !== null)) {
+        handleEnd("draw");
         return;
       }
 
       isGameActive = true;
-      statusBar.innerText = "Tamaro vaaro (X)";
+      setCellsDisabled(false);
+      statusBar.textContent = "Tamaro vaaro (X)";
     }
 
-    // Direct, flawless line scanner for both WIN and BLOCK
-    function scanForWinningSlot(symbol) {
-      for (let i = 0; i < WINNING_LINES.length; i++) {
-        const [a, b, c] = WINNING_LINES[i];
-        const line = [board[a], board[b], board[c]];
-        
-        let symCount = 0;
-        let nullIdx = null;
+    function chooseRandomMove() {
+      const emptySlots = [];
 
-        if (line[0] === symbol) symCount++;
-        else if (line[0] === null) nullIdx = a;
-
-        if (line[1] === symbol) symCount++;
-        else if (line[1] === null) nullIdx = b;
-
-        if (line[2] === symbol) symCount++;
-        else if (line[2] === null) nullIdx = c;
-
-        // If exactly 2 are matching and 1 is empty -> THAT is the spot to win or block!
-        if (symCount === 2 && nullIdx !== null) {
-          return nullIdx;
+      for (let i = 0; i < board.length; i++) {
+        if (board[i] === null) {
+          emptySlots.push(i);
         }
       }
-      return null;
+
+      if (emptySlots.length === 0) {
+        return -1;
+      }
+
+      return emptySlots[
+        Math.floor(Math.random() * emptySlots.length)
+      ];
+    }
+
+    // =========================================
+    // MINIMAX AI
+    // Simulates possible moves without changing
+    // the real board permanently.
+    // =========================================
+
+    function getBestMove() {
+      let bestScore = -Infinity;
+      let bestMoves = [];
+
+      for (let i = 0; i < 9; i++) {
+        if (board[i] !== null) {
+          continue;
+        }
+
+        board[i] = "O";
+        const score = minimax(board, 1, false);
+        board[i] = null;
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestMoves = [i];
+        } else if (score === bestScore) {
+          bestMoves.push(i);
+        }
+      }
+
+      if (bestMoves.length === 0) {
+        return -1;
+      }
+
+      // Randomize equally good moves to avoid predictable play.
+      return bestMoves[
+        Math.floor(Math.random() * bestMoves.length)
+      ];
+    }
+
+    function minimax(state, depth, maximizing) {
+      if (hasWinner(state, "O")) {
+        return 10 - depth;
+      }
+
+      if (hasWinner(state, "X")) {
+        return depth - 10;
+      }
+
+      if (state.every(value => value !== null)) {
+        return 0;
+      }
+
+      if (maximizing) {
+        let bestScore = -Infinity;
+
+        for (let i = 0; i < 9; i++) {
+          if (state[i] !== null) {
+            continue;
+          }
+
+          state[i] = "O";
+          const score = minimax(state, depth + 1, false);
+          state[i] = null;
+
+          bestScore = Math.max(bestScore, score);
+        }
+
+        return bestScore;
+      }
+
+      let bestScore = Infinity;
+
+      for (let i = 0; i < 9; i++) {
+        if (state[i] !== null) {
+          continue;
+        }
+
+        state[i] = "X";
+        const score = minimax(state, depth + 1, true);
+        state[i] = null;
+
+        bestScore = Math.min(bestScore, score);
+      }
+
+      return bestScore;
+    }
+
+    // =========================================
+    // WIN DETECTION
+    // =========================================
+
+    function hasWinner(state, symbol) {
+      return WINNING_LINES.some(([a, b, c]) =>
+        state[a] === symbol &&
+        state[b] === symbol &&
+        state[c] === symbol
+      );
     }
 
     function checkWinner(symbol) {
-      for (let i = 0; i < WINNING_LINES.length; i++) {
-        const [a, b, c] = WINNING_LINES[i];
-        if (board[a] === symbol && board[b] === symbol && board[c] === symbol) {
-          cells[a].classList.add('win');
-          cells[b].classList.add('win');
-          cells[c].classList.add('win');
+      for (const [a, b, c] of WINNING_LINES) {
+        if (
+          board[a] === symbol &&
+          board[b] === symbol &&
+          board[c] === symbol
+        ) {
+          cells[a].classList.add("win");
+          cells[b].classList.add("win");
+          cells[c].classList.add("win");
           return true;
         }
       }
+
       return false;
     }
 
+    // =========================================
+    // ROUND RESULT
+    // =========================================
+
     function handleEnd(result) {
       isGameActive = false;
+      setCellsDisabled(true);
 
-      if (result === 'win') {
-        totalWins++;
-        currentLevel++;
-        localStorage.setItem('catchme_level', currentLevel);
-        localStorage.setItem('catchme_wins', totalWins);
-        updateHeader();
-
-        modalTitle.innerText = "Superb Victory! 🎉";
-        modalTitle.style.color = "var(--win-color)";
-        modalMsg.innerText = `Level ${currentLevel - 1} Clear! Have Level ${currentLevel} ma aavi gaya chho.`;
-        modalBtn.innerText = "Play Next Level";
-      } else if (result === 'lose') {
-        modalTitle.innerText = "Computer Won! 🤖";
-        modalTitle.style.color = "var(--accent)";
-        modalMsg.innerText = "Aa round tame hari gaya. Farithi try karo!";
-        modalBtn.innerText = "Try Again";
-      } else {
-        modalTitle.innerText = "Round Draw! 🤝";
-        modalTitle.style.color = "#fbbf24";
-        modalMsg.innerText = "Draw thayo! Farithi ramvu padse.";
-        modalBtn.innerText = "Retry";
+      if (aiTimer !== null) {
+        clearTimeout(aiTimer);
+        aiTimer = null;
       }
 
-      resultModal.classList.add('show');
+      if (result === "win") {
+        const clearedLevel = currentLevel;
+
+        totalWins++;
+        currentLevel++;
+
+        saveProgress();
+        updateHeader();
+
+        modalTitle.textContent = "Superb Victory! 🎉";
+        modalTitle.style.color = "var(--win-color)";
+        modalMsg.textContent =
+          `Level ${clearedLevel} Clear! ` +
+          `Welcome to Level ${currentLevel}.`;
+        modalBtn.textContent = "Play Next Level";
+
+      } else if (result === "lose") {
+        modalTitle.textContent = "Computer Won! 🤖";
+        modalTitle.style.color = "var(--accent)";
+        modalMsg.textContent =
+          "Aa round tame hari gaya. Farithi try karo!";
+        modalBtn.textContent = "Try Again";
+
+      } else {
+        modalTitle.textContent = "Round Draw! 🤝";
+        modalTitle.style.color = "#fbbf24";
+        modalMsg.textContent =
+          "Draw thayo! Farithi ramvu padse.";
+        modalBtn.textContent = "Retry";
+      }
+
+      resultModal.classList.add("show");
+      modalBtn.focus();
     }
 
     function nextRoundAction() {
-      resultModal.classList.remove('show');
+      resultModal.classList.remove("show");
       resetRound();
     }
 
+    // =========================================
+    // RESET ROUND
+    // Does not erase saved level or total wins.
+    // =========================================
+
     function resetRound() {
+      if (aiTimer !== null) {
+        clearTimeout(aiTimer);
+        aiTimer = null;
+      }
+
+      resultModal.classList.remove("show");
+
       board = Array(9).fill(null);
-      cells.forEach(cell => {
-        cell.innerText = "";
-        cell.className = "cell";
-      });
       isGameActive = true;
-      statusBar.innerText = "Tamaro vaaro (X)";
+
+      cells.forEach((cell, index) => {
+        cell.textContent = "";
+        cell.className = "cell";
+        cell.disabled = false;
+        cell.setAttribute("aria-label", `Cell ${index + 1}`);
+      });
+
+      statusBar.textContent = "Tamaro vaaro (X)";
       updateHeader();
     }
 
+    // =========================================
+    // START GAME
+    // =========================================
+
     updateHeader();
+    resetRound();
   </script>
 </body>
 </html>
