@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Block Blast Master</title>
+  <title>Game Hub Master</title>
   <style>
     * {
       box-sizing: border-box;
@@ -11,86 +11,22 @@
       padding: 0;
       user-select: none;
       -webkit-user-select: none;
-      touch-action: none;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
     body {
-      background: #0f4c81;
+      background: linear-gradient(180deg, #1f77b4 0%, #0c3e66 100%);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    }
-
-    /* 1. DIRECT OVERLAY SPLASH (AUTO-DELETES ITSELF) */
-    #splashScreen {
-      position: fixed;
-      inset: 0;
-      background: linear-gradient(180deg, #1d6fa5 0%, #0d3b66 100%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      transition: opacity 0.4s ease;
-    }
-
-    .splash-logo {
-      font-size: 42px;
-      font-weight: 900;
-      color: #fff;
-      text-shadow: 0 6px 0 #082947, 0 12px 25px rgba(0,0,0,0.5);
-      letter-spacing: 2px;
-      text-align: center;
-      margin-bottom: 25px;
-    }
-
-    .splash-sub {
-      font-size: 13px;
-      color: #70d6ff;
-      letter-spacing: 3px;
-      font-weight: 700;
-      margin-top: -18px;
-      margin-bottom: 40px;
-    }
-
-    .loader {
-      display: grid;
-      grid-template-columns: repeat(2, 14px);
-      gap: 5px;
-      animation: spin 1.2s infinite ease-in-out;
-    }
-
-    .loader-dot {
-      width: 14px;
-      height: 14px;
-      background: #ffb703;
-      border-radius: 4px;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    /* 2. MENU SCREEN */
-    #menuScreen {
-      width: 100%;
-      height: 100vh;
-      max-width: 400px;
-      background: linear-gradient(180deg, #1f77b4 0%, #0c3e66 100%);
-      padding: 30px 20px;
-      display: flex;
-      flex-direction: column;
       justify-content: space-between;
-      align-items: center;
+      padding: 30px 20px;
     }
 
-    .menu-header {
+    .top-header {
       width: 100%;
+      max-width: 320px;
       display: flex;
       justify-content: flex-end;
     }
@@ -103,32 +39,29 @@
       border-radius: 50%;
       width: 40px;
       height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       cursor: pointer;
     }
 
-    .game-logo-box {
+    .brand-box {
       text-align: center;
-      margin-top: 10px;
+      margin-top: 15px;
     }
 
     .crown-icon {
-      font-size: 32px;
-      margin-bottom: -10px;
+      font-size: 34px;
       filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
     }
 
-    .main-logo-text {
-      font-size: 48px;
+    .brand-title {
+      font-size: 44px;
       font-weight: 900;
       color: #fff;
-      text-shadow: 0 6px 0 #0d3b66, 0 10px 20px rgba(0,0,0,0.4);
+      text-shadow: 0 6px 0 #082947, 0 10px 20px rgba(0,0,0,0.4);
       letter-spacing: 1px;
+      line-height: 1.1;
     }
 
-    .menu-btn-group {
+    .menu-list {
       width: 100%;
       max-width: 310px;
       display: flex;
@@ -137,7 +70,7 @@
       margin-bottom: 40px;
     }
 
-    .glossy-btn {
+    .menu-btn {
       width: 100%;
       padding: 16px 20px;
       border: none;
@@ -149,597 +82,54 @@
       align-items: center;
       gap: 15px;
       cursor: pointer;
-      position: relative;
-      transition: transform 0.08s;
+      text-decoration: none;
       box-shadow: 0 8px 0 rgba(0,0,0,0.25), 0 15px 25px rgba(0,0,0,0.3);
+      transition: transform 0.08s;
     }
 
-    .glossy-btn:active {
+    .menu-btn:active {
       transform: translateY(4px);
-      box-shadow: 0 4px 0 rgba(0,0,0,0.25), 0 8px 15px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 0 rgba(0,0,0,0.25);
     }
 
-    .btn-adventure {
-      background: linear-gradient(180deg, #ffb03a 0%, #f77f00 100%);
-      border-top: 2px solid #ffd166;
+    .btn-ttt {
+      background: linear-gradient(180deg, #ff6b6b 0%, #d9383a 100%);
+      border-top: 2px solid #ffa8a8;
     }
 
-    .btn-classic {
+    .btn-bb {
       background: linear-gradient(180deg, #06d6a0 0%, #049f76 100%);
       border-top: 2px solid #70e000;
     }
 
     .btn-more {
-      background: linear-gradient(180deg, #f72585 0%, #b5179e 100%);
-      border-top: 2px solid #ff70a6;
-    }
-
-    /* 3. GAMEPLAY SCREEN */
-    #gameScreen {
-      width: 100%;
-      height: 100vh;
-      max-width: 400px;
-      background: #2b3035;
-      padding: 20px 15px;
-      display: none;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .game-nav {
-      width: 100%;
-      max-width: 360px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 10px;
-    }
-
-    .high-score-bar {
-      color: #ffb703;
-      font-size: 20px;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .current-score {
-      font-size: 52px;
-      font-weight: 900;
-      color: #72efdd;
-      text-shadow: 0 4px 15px rgba(114, 239, 221, 0.4);
-      margin-top: -5px;
-    }
-
-    .grid-container {
-      width: 336px;
-      height: 336px;
-      background: #1f2326;
-      border: 3px solid #3a4146;
-      border-radius: 12px;
-      display: grid;
-      grid-template-columns: repeat(8, 1fr);
-      grid-template-rows: repeat(8, 1fr);
-      gap: 3px;
-      padding: 4px;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.5);
-    }
-
-    .grid-cell {
-      background: #2d3339;
-      border-radius: 4px;
-      transition: background 0.08s;
-    }
-
-    .grid-cell.filled {
-      background: linear-gradient(135deg, #2ec4b6 0%, #0f9f90 100%);
-      box-shadow: inset 1px 1px 2px rgba(255,255,255,0.6), inset -1px -1px 2px rgba(0,0,0,0.4);
-    }
-
-    .grid-cell.preview-hover {
-      background: rgba(46, 196, 182, 0.55);
-      border: 1px solid #72efdd;
-    }
-
-    .grid-cell.clearing {
-      animation: blastAnim 0.3s forwards;
-    }
-
-    @keyframes blastAnim {
-      0% { transform: scale(1); background: #ffffff; }
-      50% { transform: scale(1.15); background: #70e000; }
-      100% { transform: scale(0); opacity: 0; }
-    }
-
-    .dock-area {
-      width: 100%;
-      max-width: 360px;
-      height: 120px;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      margin-bottom: 15px;
-    }
-
-    .dock-slot {
-      width: 95px;
-      height: 95px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .draggable-shape {
-      display: grid;
-      gap: 2px;
-      touch-action: none;
-      cursor: grab;
-    }
-
-    .block-unit {
-      width: 22px;
-      height: 22px;
-      background: linear-gradient(135deg, #2ec4b6 0%, #0f9f90 100%);
-      border-radius: 4px;
-      box-shadow: inset 1px 1px 2px rgba(255,255,255,0.5), inset -1px -1px 2px rgba(0,0,0,0.3);
-    }
-
-    /* DRAGGING FLOATING ELEMENT */
-    #floatingDrag {
-      position: fixed;
-      pointer-events: none;
-      display: none;
-      z-index: 1000;
-      transform: translate(-50%, -50%);
-    }
-
-    #floatingDrag .block-unit {
-      width: 38px;
-      height: 38px;
-    }
-
-    #floatingDrag .draggable-shape {
-      gap: 3px;
-    }
-
-    /* MODAL */
-    .game-modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.85);
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-    }
-
-    .game-modal.show { display: flex; }
-
-    .modal-card {
-      background: #1f2326;
-      border: 2px solid #3a4146;
-      padding: 30px;
-      border-radius: 20px;
-      text-align: center;
-      width: 280px;
-      color: white;
+      background: linear-gradient(180deg, #ffb03a 0%, #f77f00 100%);
+      border-top: 2px solid #ffd166;
     }
   </style>
 </head>
 <body>
 
-  <!-- 1. SPLASH SCREEN (Self Removing) -->
-  <div id="splashScreen">
-    <div class="splash-logo">BLOCK<br>BLAST</div>
-    <div class="splash-sub">ADVENTURE MASTER</div>
-    <div class="loader">
-      <div class="loader-dot"></div>
-      <div class="loader-dot"></div>
-      <div class="loader-dot"></div>
-      <div class="loader-dot"></div>
-    </div>
+  <div class="top-header">
+    <button class="icon-btn">⚙️</button>
   </div>
 
-  <!-- 2. MAIN MENU SCREEN -->
-  <div id="menuScreen">
-    <div class="menu-header">
-      <button class="icon-btn">⚙️</button>
-    </div>
-
-    <div class="game-logo-box">
-      <div class="crown-icon">👑</div>
-      <div class="main-logo-text">BLOCK<br>BLAST</div>
-    </div>
-
-    <div class="menu-btn-group">
-      <button class="glossy-btn btn-adventure" onclick="startClassicGame()">
-        <span>📍</span> Adventure
-      </button>
-      <button class="glossy-btn btn-classic" onclick="startClassicGame()">
-        <span>♾️</span> Classic
-      </button>
-      <button class="glossy-btn btn-more" onclick="alert('More games feature unlock thase!')">
-        <span>🎮</span> More Games
-      </button>
-    </div>
+  <div class="brand-box">
+    <div class="crown-icon">👑</div>
+    <div class="brand-title">GAME<br>HUB</div>
   </div>
 
-  <!-- 3. GAMEPLAY SCREEN -->
-  <div id="gameScreen">
-    <div class="game-nav">
-      <div class="high-score-bar">👑 <span id="highScoreText">0</span></div>
-      <button class="icon-btn" onclick="goToMenu()">🏠</button>
-    </div>
-
-    <div class="current-score" id="scoreText">0</div>
-
-    <div class="grid-container" id="gameGrid"></div>
-
-    <div class="dock-area" id="dockArea"></div>
+  <div class="menu-list">
+    <a href="tictactoe.html" class="menu-btn btn-ttt">
+      <span>⭕</span> Tic Tac Toe (AI / 2P)
+    </a>
+    <a href="blockblast.html" class="menu-btn btn-bb">
+      <span>🧱</span> Block Blast
+    </a>
+    <button class="menu-btn btn-more" onclick="alert('Nava levels ane games jaldi aavse!')">
+      <span>🎮</span> More Games
+    </button>
   </div>
 
-  <div id="floatingDrag"></div>
-
-  <!-- GAME OVER MODAL -->
-  <div class="game-modal" id="gameOverModal">
-    <div class="modal-card">
-      <h2 style="color:#ff4d6d; margin-bottom:10px;">Game Over!</h2>
-      <p style="margin-bottom:20px; font-size:16px;">Score: <span id="finalScore">0</span></p>
-      <button class="glossy-btn btn-classic" style="justify-content:center;" onclick="restartGame()">Play Again</button>
-    </div>
-  </div>
-
-  <script>
-    // 1. SPLASH SCREEN AUTO-REMOVAL (100% Guaranteed Fix)
-    setTimeout(() => {
-      const sp = document.getElementById('splashScreen');
-      if (sp) {
-        sp.style.opacity = '0';
-        setTimeout(() => sp.remove(), 400); // DOM mathi delete kari nakhe chhe
-      }
-    }, 1500);
-
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playBeep(freq, type = 'sine', duration = 0.08) {
-      try {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = type;
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + duration);
-      } catch(e){}
-    }
-
-    let grid = Array(8).fill(null).map(() => Array(8).fill(0));
-    let score = 0;
-    let highScore = parseInt(localStorage.getItem('bb_real_high')) || 0;
-    let dockItems = [null, null, null];
-
-    const SHAPES = [
-      [[1]], // 1x1
-      [[1, 1]], // 1x2 H
-      [[1], [1]], // 2x1 V
-      [[1, 1, 1]], // 1x3 H
-      [[1], [1], [1]], // 3x1 V
-      [[1, 1], [1, 1]], // 2x2
-      [[1, 1, 1], [1, 1, 1], [1, 1, 1]], // 3x3
-      [[1, 0], [1, 1]], // Corner small
-      [[1, 0, 0], [1, 0, 0], [1, 1, 1]], // L
-      [[1, 1, 1], [0, 1, 0]] // T
-    ];
-
-    initGridUI();
-    document.getElementById('highScoreText').innerText = highScore;
-
-    function goToMenu() {
-      document.getElementById('gameScreen').style.display = 'none';
-      document.getElementById('menuScreen').style.display = 'flex';
-    }
-
-    function startClassicGame() {
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      document.getElementById('menuScreen').style.display = 'none';
-      document.getElementById('gameScreen').style.display = 'flex';
-      restartGame();
-    }
-
-    function restartGame() {
-      document.getElementById('gameOverModal').classList.remove('show');
-      grid = Array(8).fill(null).map(() => Array(8).fill(0));
-      score = 0;
-      updateScore(0);
-      renderGrid();
-      spawnDock();
-    }
-
-    function initGridUI() {
-      const container = document.getElementById('gameGrid');
-      container.innerHTML = '';
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-          const cell = document.createElement('div');
-          cell.className = 'grid-cell';
-          cell.dataset.r = r;
-          cell.dataset.c = c;
-          container.appendChild(cell);
-        }
-      }
-    }
-
-    function renderGrid() {
-      const cells = document.querySelectorAll('.grid-cell');
-      cells.forEach(cell => {
-        const r = parseInt(cell.dataset.r);
-        const c = parseInt(cell.dataset.c);
-        if (grid[r][c] === 1) cell.classList.add('filled');
-        else cell.classList.remove('filled');
-      });
-    }
-
-    function spawnDock() {
-      for (let i = 0; i < 3; i++) {
-        dockItems[i] = SHAPES[Math.floor(Math.random() * SHAPES.length)];
-      }
-      renderDock();
-      checkGameOver();
-    }
-
-    function renderDock() {
-      const dock = document.getElementById('dockArea');
-      dock.innerHTML = '';
-      dockItems.forEach((shape, index) => {
-        const slot = document.createElement('div');
-        slot.className = 'dock-slot';
-
-        if (shape) {
-          const shapeEl = createShapeElement(shape, 22);
-          setupDragListeners(shapeEl, index, shape);
-          slot.appendChild(shapeEl);
-        }
-        dock.appendChild(slot);
-      });
-    }
-
-    function createShapeElement(matrix, size) {
-      const wrap = document.createElement('div');
-      wrap.className = 'draggable-shape';
-      wrap.style.gridTemplateColumns = `repeat(${matrix[0].length}, ${size}px)`;
-      for (let r = 0; r < matrix.length; r++) {
-        for (let c = 0; c < matrix[0].length; c++) {
-          const u = document.createElement('div');
-          if (matrix[r][c]) {
-            u.className = 'block-unit';
-            u.style.width = size + 'px';
-            u.style.height = size + 'px';
-          } else {
-            u.style.width = size + 'px';
-            u.style.height = size + 'px';
-          }
-          wrap.appendChild(u);
-        }
-      }
-      return wrap;
-    }
-
-    // ACCURATE TOUCH & DRAG
-    let activeDragIdx = null;
-    let activeShapeMatrix = null;
-    const floating = document.getElementById('floatingDrag');
-    const DRAG_OFFSET_Y = 65;
-
-    function setupDragListeners(element, index, matrix) {
-      element.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        activeDragIdx = index;
-        activeShapeMatrix = matrix;
-
-        floating.innerHTML = '';
-        floating.appendChild(createShapeElement(matrix, 38));
-        floating.style.display = 'block';
-
-        updateFloatingPosition(e.clientX, e.clientY - DRAG_OFFSET_Y);
-        element.style.opacity = '0';
-        playBeep(450);
-      });
-    }
-
-    window.addEventListener('pointermove', (e) => {
-      if (activeDragIdx === null) return;
-      const targetY = e.clientY - DRAG_OFFSET_Y;
-      updateFloatingPosition(e.clientX, targetY);
-      checkHoverPreview(e.clientX, targetY);
-    });
-
-    window.addEventListener('pointerup', (e) => {
-      if (activeDragIdx === null) return;
-      const targetY = e.clientY - DRAG_OFFSET_Y;
-      finalizePlacement(e.clientX, targetY);
-
-      floating.style.display = 'none';
-      clearHoverPreview();
-      activeDragIdx = null;
-      activeShapeMatrix = null;
-      renderDock();
-    });
-
-    function updateFloatingPosition(x, y) {
-      floating.style.left = x + 'px';
-      floating.style.top = y + 'px';
-    }
-
-    function getGridCoordsFromPoint(x, y) {
-      const gridEl = document.getElementById('gameGrid');
-      const rect = gridEl.getBoundingClientRect();
-      const cellSize = rect.width / 8;
-
-      const shapeH = activeShapeMatrix.length;
-      const shapeW = activeShapeMatrix[0].length;
-
-      const topLeftX = x - (shapeW * cellSize) / 2;
-      const topLeftY = y - (shapeH * cellSize) / 2;
-
-      const c = Math.round((topLeftX - rect.left) / cellSize);
-      const r = Math.round((topLeftY - rect.top) / cellSize);
-
-      return { r, c };
-    }
-
-    function checkHoverPreview(x, y) {
-      clearHoverPreview();
-      const coords = getGridCoordsFromPoint(x, y);
-      if (!coords) return;
-
-      const r = coords.r;
-      const c = coords.c;
-      if (canPlaceShape(activeShapeMatrix, r, c)) {
-        for (let i = 0; i < activeShapeMatrix.length; i++) {
-          for (let j = 0; j < activeShapeMatrix[0].length; j++) {
-            if (activeShapeMatrix[i][j]) {
-              const cell = document.querySelector(`.grid-cell[data-r='${r+i}'][data-c='${c+j}']`);
-              if (cell) cell.classList.add('preview-hover');
-            }
-          }
-        }
-      }
-    }
-
-    function clearHoverPreview() {
-      document.querySelectorAll('.grid-cell.preview-hover').forEach(c => c.classList.remove('preview-hover'));
-    }
-
-    function canPlaceShape(matrix, r, c) {
-      const h = matrix.length;
-      const w = matrix[0].length;
-      if (r < 0 || c < 0 || r + h > 8 || c + w > 8) return false;
-
-      for (let i = 0; i < h; i++) {
-        for (let j = 0; j < w; j++) {
-          if (matrix[i][j] && grid[r + i][c + j] === 1) return false;
-        }
-      }
-      return true;
-    }
-
-    function finalizePlacement(x, y) {
-      const coords = getGridCoordsFromPoint(x, y);
-      if (!coords) return;
-
-      const r = coords.r;
-      const c = coords.c;
-
-      if (canPlaceShape(activeShapeMatrix, r, c)) {
-        let placedCount = 0;
-        for (let i = 0; i < activeShapeMatrix.length; i++) {
-          for (let j = 0; j < activeShapeMatrix[0].length; j++) {
-            if (activeShapeMatrix[i][j]) {
-              grid[r + i][c + j] = 1;
-              placedCount++;
-            }
-          }
-        }
-
-        dockItems[activeDragIdx] = null;
-        updateScore(score + placedCount * 10);
-        playBeep(320);
-        renderGrid();
-        clearLines();
-
-        if (dockItems.every(s => s === null)) {
-          spawnDock();
-        } else {
-          checkGameOver();
-        }
-      }
-    }
-
-    function clearLines() {
-      let fullRows = [];
-      let fullCols = [];
-
-      for (let r = 0; r < 8; r++) {
-        if (grid[r].every(v => v === 1)) fullRows.push(r);
-      }
-      for (let c = 0; c < 8; c++) {
-        let full = true;
-        for (let r = 0; r < 8; r++) {
-          if (grid[r][c] === 0) { full = false; break; }
-        }
-        if (full) fullCols.push(c);
-      }
-
-      const totalLines = fullRows.length + fullCols.length;
-
-      if (totalLines > 0) {
-        fullRows.forEach(r => {
-          for (let c = 0; c < 8; c++) {
-            grid[r][c] = 0;
-            animateCellBlast(r, c);
-          }
-        });
-
-        fullCols.forEach(c => {
-          for (let r = 0; r < 8; r++) {
-            grid[r][c] = 0;
-            animateCellBlast(r, c);
-          }
-        });
-
-        playBeep(650, 'triangle', 0.25);
-        updateScore(score + totalLines * 120);
-        setTimeout(renderGrid, 250);
-      }
-    }
-
-    function animateCellBlast(r, c) {
-      const cell = document.querySelector(`.grid-cell[data-r='${r}'][data-c='${c}']`);
-      if (cell) {
-        cell.classList.add('clearing');
-        setTimeout(() => cell.classList.remove('clearing'), 300);
-      }
-    }
-
-    function updateScore(val) {
-      score = val;
-      document.getElementById('scoreText').innerText = score;
-      if (score > highScore) {
-        highScore = score;
-        localStorage.setItem('bb_real_high', highScore);
-        document.getElementById('highScoreText').innerText = highScore;
-      }
-    }
-
-    function checkGameOver() {
-      const remaining = dockItems.filter(s => s !== null);
-      if (remaining.length === 0) return;
-
-      let canFitAny = false;
-      for (let shape of remaining) {
-        for (let r = 0; r < 8; r++) {
-          for (let c = 0; c < 8; c++) {
-            if (canPlaceShape(shape, r, c)) {
-              canFitAny = true;
-              break;
-            }
-          }
-          if (canFitAny) break;
-        }
-        if (canFitAny) break;
-      }
-
-      if (!canFitAny) {
-        setTimeout(() => {
-          document.getElementById('finalScore').innerText = score;
-          document.getElementById('gameOverModal').classList.add('show');
-        }, 300);
-      }
-    }
-  </script>
 </body>
 </html>
