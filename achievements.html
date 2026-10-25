@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Achievement</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background: #415a8d;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 14px;
+      color: #fff;
+    }
+
+    .header-nav {
+      width: 100%;
+      max-width: 360px;
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .back-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 26px;
+      cursor: pointer;
+    }
+
+    .nav-title {
+      width: 100%;
+      text-align: center;
+      font-size: 22px;
+      font-weight: 900;
+      margin-left: -26px;
+    }
+
+    .section-lbl {
+      width: 100%;
+      max-width: 360px;
+      font-size: 16px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      color: #cbd5e1;
+    }
+
+    /* STATISTICS GRID (2x2) */
+    .stats-grid {
+      width: 100%;
+      max-width: 360px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: #334773;
+      border: 2px solid #576d9c;
+      border-radius: 14px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .stat-val { font-size: 24px; font-weight: 900; color: #ffd166; margin-bottom: 4px; }
+    .stat-name { font-size: 12px; color: #94a3b8; font-weight: 700; }
+
+    /* AWARDS GRID (3 Columns) */
+    .awards-grid {
+      width: 100%;
+      max-width: 360px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      overflow-y: auto;
+      max-height: 60vh;
+      padding-bottom: 20px;
+    }
+
+    .award-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .badge-icon {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #facc15 0%, #ca8a04 100%);
+      border: 3px solid #fef08a;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      margin-bottom: 8px;
+    }
+
+    .award-name { font-size: 12px; font-weight: 800; margin-bottom: 2px; }
+    .award-prog { font-size: 11px; color: #94a3b8; font-weight: 700; }
+  </style>
+</head>
+<body>
+
+  <div class="header-nav">
+    <button class="back-btn" onclick="location.href='blockblast.html'">‹</button>
+    <div class="nav-title">Achievement</div>
+  </div>
+
+  <div class="section-lbl">Statistics</div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-val">29</div>
+      <div class="stat-name">Highest Combo</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="achHs">0</div>
+      <div class="stat-name">Best Score</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val">455</div>
+      <div class="stat-name">Rounds</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val">27</div>
+      <div class="stat-name">Login Days</div>
+    </div>
+  </div>
+
+  <div class="section-lbl">Awards</div>
+  <div class="awards-grid">
+    <div class="award-card">
+      <div class="badge-icon">🎯</div>
+      <div class="award-name">Score Champ</div>
+      <div class="award-prog">12/12</div>
+    </div>
+    <div class="award-card">
+      <div class="badge-icon">🛡️</div>
+      <div class="award-name">Legend</div>
+      <div class="award-prog">5/5</div>
+    </div>
+    <div class="award-card">
+      <div class="badge-icon">📅</div>
+      <div class="award-name">Perseverance</div>
+      <div class="award-prog">4/10</div>
+    </div>
+    <div class="award-card">
+      <div class="badge-icon">🧱</div>
+      <div class="award-name">Block Master</div>
+      <div class="award-prog">10/10</div>
+    </div>
+    <div class="award-card">
+      <div class="badge-icon">⚡</div>
+      <div class="award-name">Opportunist</div>
+      <div class="award-prog">10/10</div>
+    </div>
+    <div class="award-card">
+      <div class="badge-icon">💎</div>
+      <div class="award-name">Jewelry Tycoon</div>
+      <div class="award-prog">10/10</div>
+    </div>
+  </div>
+
+  <script>
+    const hs = localStorage.getItem('bb_user_highscore') || 0;
+    document.getElementById('achHs').innerText = hs;
+  </script>
+</body>
+</html>
