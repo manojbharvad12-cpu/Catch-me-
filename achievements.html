@@ -10,11 +10,13 @@
       margin: 0;
       padding: 0;
       user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
     body {
-      background: #415a8d;
+      background: #395484;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -23,29 +25,45 @@
       color: #fff;
     }
 
+    /* TOP HEADER & LARGE CLICKABLE BACK BUTTON */
     .header-nav {
       width: 100%;
       max-width: 360px;
       display: flex;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 22px;
       position: relative;
     }
 
     .back-btn {
-      background: none;
-      border: none;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       color: #fff;
-      font-size: 26px;
+      font-size: 22px;
+      font-weight: 900;
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
+      z-index: 10;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    }
+
+    .back-btn:active {
+      transform: scale(0.92);
+      background: rgba(255, 255, 255, 0.25);
     }
 
     .nav-title {
+      position: absolute;
       width: 100%;
       text-align: center;
       font-size: 22px;
-      font-weight: 900;
-      margin-left: -26px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
     }
 
     .section-lbl {
@@ -53,32 +71,43 @@
       max-width: 360px;
       font-size: 16px;
       font-weight: 800;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       color: #cbd5e1;
     }
 
-    /* STATISTICS GRID (2x2) */
+    /* REAL USER STATISTICS GRID */
     .stats-grid {
       width: 100%;
       max-width: 360px;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 24px;
+      gap: 12px;
+      margin-bottom: 26px;
     }
 
     .stat-card {
-      background: #334773;
-      border: 2px solid #576d9c;
-      border-radius: 14px;
-      padding: 14px;
+      background: #2b3e63;
+      border: 2px solid #486192;
+      border-radius: 18px;
+      padding: 16px 10px;
       text-align: center;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.25);
     }
 
-    .stat-val { font-size: 24px; font-weight: 900; color: #ffd166; margin-bottom: 4px; }
-    .stat-name { font-size: 12px; color: #94a3b8; font-weight: 700; }
+    .stat-val {
+      font-size: 28px;
+      font-weight: 900;
+      color: #ffd166;
+      margin-bottom: 4px;
+    }
 
-    /* AWARDS GRID (3 Columns) */
+    .stat-name {
+      font-size: 12px;
+      color: #94a3b8;
+      font-weight: 700;
+    }
+
+    /* AWARDS GRID (REAL DYNAMIC UNLOCKS) */
     .awards-grid {
       width: 100%;
       max-width: 360px;
@@ -86,7 +115,7 @@
       grid-template-columns: repeat(3, 1fr);
       gap: 14px;
       overflow-y: auto;
-      max-height: 60vh;
+      max-height: 58vh;
       padding-bottom: 20px;
     }
 
@@ -95,90 +124,167 @@
       flex-direction: column;
       align-items: center;
       text-align: center;
+      opacity: 0.5; /* Default Locked */
+      transition: all 0.2s;
+    }
+
+    .award-card.unlocked {
+      opacity: 1; /* Unlocked when achieved */
     }
 
     .badge-icon {
-      width: 70px;
-      height: 70px;
+      width: 68px;
+      height: 68px;
       border-radius: 50%;
       background: radial-gradient(circle, #facc15 0%, #ca8a04 100%);
       border: 3px solid #fef08a;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.35);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 30px;
+      font-size: 28px;
       margin-bottom: 8px;
     }
 
-    .award-name { font-size: 12px; font-weight: 800; margin-bottom: 2px; }
-    .award-prog { font-size: 11px; color: #94a3b8; font-weight: 700; }
+    .award-card:not(.unlocked) .badge-icon {
+      background: #475569;
+      border-color: #64748b;
+      filter: grayscale(100%);
+    }
+
+    .award-name {
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 2px;
+    }
+
+    .award-prog {
+      font-size: 11px;
+      color: #94a3b8;
+      font-weight: 700;
+    }
   </style>
 </head>
 <body>
 
+  <!-- TOP HEADER (Smart Universal Back Button) -->
   <div class="header-nav">
-    <button class="back-btn" onclick="location.href='blockblast.html'">‹</button>
+    <button class="back-btn" onclick="handleGoBack()">❮</button>
     <div class="nav-title">Achievement</div>
   </div>
 
   <div class="section-lbl">Statistics</div>
   <div class="stats-grid">
     <div class="stat-card">
-      <div class="stat-val">29</div>
+      <div class="stat-val" id="statCombo">0</div>
       <div class="stat-name">Highest Combo</div>
     </div>
     <div class="stat-card">
-      <div class="stat-val" id="achHs">0</div>
+      <div class="stat-val" id="statBestScore">0</div>
       <div class="stat-name">Best Score</div>
     </div>
     <div class="stat-card">
-      <div class="stat-val">455</div>
+      <div class="stat-val" id="statRounds">0</div>
       <div class="stat-name">Rounds</div>
     </div>
     <div class="stat-card">
-      <div class="stat-val">27</div>
+      <div class="stat-val" id="statDays">1</div>
       <div class="stat-name">Login Days</div>
     </div>
   </div>
 
   <div class="section-lbl">Awards</div>
   <div class="awards-grid">
-    <div class="award-card">
+    <div class="award-card" id="awScore">
       <div class="badge-icon">🎯</div>
       <div class="award-name">Score Champ</div>
-      <div class="award-prog">12/12</div>
+      <div class="award-prog" id="progScore">0/1000</div>
     </div>
-    <div class="award-card">
-      <div class="badge-icon">🛡️</div>
-      <div class="award-name">Legend</div>
-      <div class="award-prog">5/5</div>
+
+    <div class="award-card" id="awCombo">
+      <div class="badge-icon">⚡</div>
+      <div class="award-name">Combo Master</div>
+      <div class="award-prog" id="progCombo">0/3</div>
     </div>
-    <div class="award-card">
+
+    <div class="award-card" id="awRounds">
       <div class="badge-icon">📅</div>
       <div class="award-name">Perseverance</div>
-      <div class="award-prog">4/10</div>
+      <div class="award-prog" id="progRounds">0/10</div>
     </div>
-    <div class="award-card">
+
+    <div class="award-card" id="awLegend">
+      <div class="badge-icon">🛡️</div>
+      <div class="award-name">Legend</div>
+      <div class="award-prog" id="progLegend">0/5000</div>
+    </div>
+
+    <div class="award-card" id="awBlocks">
       <div class="badge-icon">🧱</div>
       <div class="award-name">Block Master</div>
-      <div class="award-prog">10/10</div>
+      <div class="award-prog" id="progBlocks">0/50</div>
     </div>
-    <div class="award-card">
-      <div class="badge-icon">⚡</div>
-      <div class="award-name">Opportunist</div>
-      <div class="award-prog">10/10</div>
-    </div>
-    <div class="award-card">
+
+    <div class="award-card" id="awTycoon">
       <div class="badge-icon">💎</div>
       <div class="award-name">Jewelry Tycoon</div>
-      <div class="award-prog">10/10</div>
+      <div class="award-prog" id="progTycoon">0/20</div>
     </div>
   </div>
 
   <script>
-    const hs = localStorage.getItem('bb_user_highscore') || 0;
-    document.getElementById('achHs').innerText = hs;
+    // 1. SMART UNIVERSAL BACK ACTION
+    function handleGoBack() {
+      // Pehla history check karo, nahi to direct fallback link
+      if (document.referrer && document.referrer !== window.location.href) {
+        window.history.back();
+      } else {
+        // Fallback: game hub athva index file
+        window.location.href = 'index.html';
+      }
+    }
+
+    // 2. REAL USER DATA LOAD
+    const bestScore = parseInt(localStorage.getItem('bb_user_highscore')) || 0;
+    const maxCombo = parseInt(localStorage.getItem('bb_max_combo')) || 0;
+    const totalRounds = parseInt(localStorage.getItem('bb_total_rounds')) || 0;
+    const blocksCleared = parseInt(localStorage.getItem('bb_total_cleared')) || 0;
+
+    // Display Real User Stats
+    document.getElementById('statBestScore').innerText = bestScore;
+    document.getElementById('statCombo').innerText = maxCombo;
+    document.getElementById('statRounds').innerText = totalRounds;
+
+    // 3. AWARDS CALCULATION LOGIC (Unlock based on real achievement)
+    // Award 1: Score Champ (Target: 1000 pts)
+    const progScore = Math.min(bestScore, 1000);
+    document.getElementById('progScore').innerText = `${progScore}/1000`;
+    if (bestScore >= 1000) document.getElementById('awScore').classList.add('unlocked');
+
+    // Award 2: Combo Master (Target: 3 lines combo)
+    const progCombo = Math.min(maxCombo, 3);
+    document.getElementById('progCombo').innerText = `${progCombo}/3`;
+    if (maxCombo >= 3) document.getElementById('awCombo').classList.add('unlocked');
+
+    // Award 3: Perseverance (Target: 10 rounds)
+    const progRounds = Math.min(totalRounds, 10);
+    document.getElementById('progRounds').innerText = `${progRounds}/10`;
+    if (totalRounds >= 10) document.getElementById('awRounds').classList.add('unlocked');
+
+    // Award 4: Legend (Target: 5000 pts)
+    const progLegend = Math.min(bestScore, 5000);
+    document.getElementById('progLegend').innerText = `${progLegend}/5000`;
+    if (bestScore >= 5000) document.getElementById('awLegend').classList.add('unlocked');
+
+    // Award 5: Block Master (Target: 50 lines cleared)
+    const progBlocks = Math.min(blocksCleared, 50);
+    document.getElementById('progBlocks').innerText = `${progBlocks}/50`;
+    if (blocksCleared >= 50) document.getElementById('awBlocks').classList.add('unlocked');
+
+    // Award 6: Jewelry Tycoon (Target: 20 rounds)
+    const progTycoon = Math.min(totalRounds, 20);
+    document.getElementById('progTycoon').innerText = `${progTycoon}/20`;
+    if (totalRounds >= 20) document.getElementById('awTycoon').classList.add('unlocked');
   </script>
 </body>
 </html>
