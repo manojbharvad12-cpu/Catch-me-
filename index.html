@@ -12,7 +12,7 @@
       user-select: none;
       -webkit-user-select: none;
       touch-action: none;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
     body {
@@ -25,26 +25,17 @@
       overflow: hidden;
     }
 
-    .screen {
-      position: absolute;
+    /* 1. DIRECT OVERLAY SPLASH (AUTO-DELETES ITSELF) */
+    #splashScreen {
+      position: fixed;
       inset: 0;
-      width: 100%;
-      height: 100%;
-      display: none;
+      background: linear-gradient(180deg, #1d6fa5 0%, #0d3b66 100%);
+      display: flex;
       flex-direction: column;
       align-items: center;
-    }
-
-    .screen.active {
-      display: flex;
-    }
-
-    /* 1. SPLASH SCREEN */
-    #splashScreen {
-      background: linear-gradient(180deg, #1d6fa5 0%, #0d3b66 100%);
       justify-content: center;
-      z-index: 50;
-      cursor: pointer;
+      z-index: 9999;
+      transition: opacity 0.4s ease;
     }
 
     .splash-logo {
@@ -55,7 +46,6 @@
       letter-spacing: 2px;
       text-align: center;
       margin-bottom: 25px;
-      animation: float 2s infinite ease-in-out;
     }
 
     .splash-sub {
@@ -86,16 +76,17 @@
       100% { transform: rotate(360deg); }
     }
 
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
-    }
-
     /* 2. MENU SCREEN */
     #menuScreen {
+      width: 100%;
+      height: 100vh;
+      max-width: 400px;
       background: linear-gradient(180deg, #1f77b4 0%, #0c3e66 100%);
       padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
       justify-content: space-between;
+      align-items: center;
     }
 
     .menu-header {
@@ -185,9 +176,15 @@
 
     /* 3. GAMEPLAY SCREEN */
     #gameScreen {
+      width: 100%;
+      height: 100vh;
+      max-width: 400px;
       background: #2b3035;
       padding: 20px 15px;
+      display: none;
+      flex-direction: column;
       justify-content: space-between;
+      align-items: center;
     }
 
     .game-nav {
@@ -289,7 +286,7 @@
       box-shadow: inset 1px 1px 2px rgba(255,255,255,0.5), inset -1px -1px 2px rgba(0,0,0,0.3);
     }
 
-    /* DRAG FLOATING */
+    /* DRAGGING FLOATING ELEMENT */
     #floatingDrag {
       position: fixed;
       pointer-events: none;
@@ -307,7 +304,7 @@
       gap: 3px;
     }
 
-    /* GAME OVER MODAL */
+    /* MODAL */
     .game-modal {
       display: none;
       position: fixed;
@@ -333,8 +330,8 @@
 </head>
 <body>
 
-  <!-- 1. SPLASH -->
-  <div class="screen active" id="splashScreen" onclick="dismissSplash()">
+  <!-- 1. SPLASH SCREEN (Self Removing) -->
+  <div id="splashScreen">
     <div class="splash-logo">BLOCK<br>BLAST</div>
     <div class="splash-sub">ADVENTURE MASTER</div>
     <div class="loader">
@@ -345,8 +342,8 @@
     </div>
   </div>
 
-  <!-- 2. MENU -->
-  <div class="screen" id="menuScreen">
+  <!-- 2. MAIN MENU SCREEN -->
+  <div id="menuScreen">
     <div class="menu-header">
       <button class="icon-btn">⚙️</button>
     </div>
@@ -363,14 +360,14 @@
       <button class="glossy-btn btn-classic" onclick="startClassicGame()">
         <span>♾️</span> Classic
       </button>
-      <button class="glossy-btn btn-more" onclick="alert('More games feature jaldi aavse!')">
+      <button class="glossy-btn btn-more" onclick="alert('More games feature unlock thase!')">
         <span>🎮</span> More Games
       </button>
     </div>
   </div>
 
-  <!-- 3. GAMEPLAY -->
-  <div class="screen" id="gameScreen">
+  <!-- 3. GAMEPLAY SCREEN -->
+  <div id="gameScreen">
     <div class="game-nav">
       <div class="high-score-bar">👑 <span id="highScoreText">0</span></div>
       <button class="icon-btn" onclick="goToMenu()">🏠</button>
@@ -395,6 +392,15 @@
   </div>
 
   <script>
+    // 1. SPLASH SCREEN AUTO-REMOVAL (100% Guaranteed Fix)
+    setTimeout(() => {
+      const sp = document.getElementById('splashScreen');
+      if (sp) {
+        sp.style.opacity = '0';
+        setTimeout(() => sp.remove(), 400); // DOM mathi delete kari nakhe chhe
+      }
+    }, 1500);
+
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playBeep(freq, type = 'sine', duration = 0.08) {
       try {
@@ -413,7 +419,7 @@
 
     let grid = Array(8).fill(null).map(() => Array(8).fill(0));
     let score = 0;
-    let highScore = parseInt(localStorage.getItem('bb_user_highscore')) || 0;
+    let highScore = parseInt(localStorage.getItem('bb_real_high')) || 0;
     let dockItems = [null, null, null];
 
     const SHAPES = [
@@ -429,33 +435,18 @@
       [[1, 1, 1], [0, 1, 0]] // T
     ];
 
-    // INSTANT AUTO-BYPASS FOR SPLASH SCREEN
-    let splashDismissed = false;
-    function dismissSplash() {
-      if (splashDismissed) return;
-      splashDismissed = true;
-      const s = document.getElementById('splashScreen');
-      if (s) s.classList.remove('active');
-      const m = document.getElementById('menuScreen');
-      if (m) m.classList.add('active');
-    }
-
-    // Direct timer: 1.5 seconds ma bypass thase
-    setTimeout(dismissSplash, 1500);
-
-    // Initial setup
     initGridUI();
     document.getElementById('highScoreText').innerText = highScore;
 
     function goToMenu() {
-      document.getElementById('gameScreen').classList.remove('active');
-      document.getElementById('menuScreen').classList.add('active');
+      document.getElementById('gameScreen').style.display = 'none';
+      document.getElementById('menuScreen').style.display = 'flex';
     }
 
     function startClassicGame() {
       if (audioCtx.state === 'suspended') audioCtx.resume();
-      document.getElementById('menuScreen').classList.remove('active');
-      document.getElementById('gameScreen').classList.add('active');
+      document.getElementById('menuScreen').style.display = 'none';
+      document.getElementById('gameScreen').style.display = 'flex';
       restartGame();
     }
 
@@ -537,11 +528,11 @@
       return wrap;
     }
 
-    // DRAG LOGIC
+    // ACCURATE TOUCH & DRAG
     let activeDragIdx = null;
     let activeShapeMatrix = null;
     const floating = document.getElementById('floatingDrag');
-    const DRAG_OFFSET_Y = 65; // Finger thi thodu upar jethi ungli pachhad hide na thay
+    const DRAG_OFFSET_Y = 65;
 
     function setupDragListeners(element, index, matrix) {
       element.addEventListener('pointerdown', (e) => {
@@ -719,7 +710,7 @@
       document.getElementById('scoreText').innerText = score;
       if (score > highScore) {
         highScore = score;
-        localStorage.setItem('bb_user_highscore', highScore);
+        localStorage.setItem('bb_real_high', highScore);
         document.getElementById('highScoreText').innerText = highScore;
       }
     }
@@ -745,4 +736,10 @@
       if (!canFitAny) {
         setTimeout(() => {
           document.getElementById('finalScore').innerText = score;
-          document.g
+          document.getElementById('gameOverModal').classList.add('show');
+        }, 300);
+      }
+    }
+  </script>
+</body>
+</html>
