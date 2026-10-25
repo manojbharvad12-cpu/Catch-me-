@@ -114,6 +114,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      cursor: pointer;
     }
 
     .game-logo-box {
@@ -211,7 +212,7 @@
       font-weight: 900;
       color: #72efdd;
       text-shadow: 0 4px 15px rgba(114, 239, 221, 0.4);
-      margin-top: -10px;
+      margin-top: -5px;
     }
 
     .grid-container {
@@ -231,7 +232,7 @@
     .grid-cell {
       background: #2d3339;
       border-radius: 4px;
-      transition: background 0.1s;
+      transition: background 0.08s;
     }
 
     .grid-cell.filled {
@@ -240,7 +241,8 @@
     }
 
     .grid-cell.preview-hover {
-      background: rgba(46, 196, 182, 0.45);
+      background: rgba(46, 196, 182, 0.55);
+      border: 1px solid #72efdd;
     }
 
     .grid-cell.clearing {
@@ -260,7 +262,7 @@
       display: flex;
       justify-content: space-around;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
 
     .dock-slot {
@@ -286,7 +288,7 @@
       box-shadow: inset 1px 1px 2px rgba(255,255,255,0.5), inset -1px -1px 2px rgba(0,0,0,0.3);
     }
 
-    /* DRAG FLOATING CLONE */
+    /* DRAGGING FLOATING ELEMENT */
     #floatingDrag {
       position: fixed;
       pointer-events: none;
@@ -304,12 +306,12 @@
       gap: 3px;
     }
 
-    /* MODAL */
+    /* GAME OVER MODAL */
     .game-modal {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.8);
+      background: rgba(0,0,0,0.85);
       align-items: center;
       justify-content: center;
       z-index: 100;
@@ -330,7 +332,7 @@
 </head>
 <body>
 
-  <!-- 1. OPENING SPLASH SCREEN -->
+  <!-- 1. SPLASH -->
   <div class="screen active" id="splashScreen">
     <div class="splash-logo">BLOCK<br>BLAST</div>
     <div class="splash-sub">ADVENTURE MASTER</div>
@@ -342,7 +344,7 @@
     </div>
   </div>
 
-  <!-- 2. MAIN MENU SCREEN -->
+  <!-- 2. MENU -->
   <div class="screen" id="menuScreen">
     <div class="menu-header">
       <button class="icon-btn">⚙️</button>
@@ -360,13 +362,13 @@
       <button class="glossy-btn btn-classic" onclick="startClassicGame()">
         <span>♾️</span> Classic
       </button>
-      <button class="glossy-btn btn-more" onclick="alert('More Games feature unlock thase!')">
+      <button class="glossy-btn btn-more" onclick="alert('More games feature unlock thase!')">
         <span>🎮</span> More Games
       </button>
     </div>
   </div>
 
-  <!-- 3. GAMEPLAY SCREEN -->
+  <!-- 3. GAMEPLAY -->
   <div class="screen" id="gameScreen">
     <div class="game-nav">
       <div class="high-score-bar">👑 <span id="highScoreText">0</span></div>
@@ -380,10 +382,9 @@
     <div class="dock-area" id="dockArea"></div>
   </div>
 
-  <!-- DRAGGING ELEMENT -->
   <div id="floatingDrag"></div>
 
-  <!-- GAME OVER MODAL -->
+  <!-- MODAL -->
   <div class="game-modal" id="gameOverModal">
     <div class="modal-card">
       <h2 style="color:#ff4d6d; margin-bottom:10px;">Game Over!</h2>
@@ -393,7 +394,6 @@
   </div>
 
   <script>
-    // AUDIO ENGINE (Built-in Web Audio API)
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playBeep(freq, type = 'sine', duration = 0.08) {
       try {
@@ -401,7 +401,7 @@
         const gain = audioCtx.createGain();
         osc.type = type;
         osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
@@ -410,32 +410,30 @@
       } catch(e){}
     }
 
-    // STATE
     let grid = Array(8).fill(null).map(() => Array(8).fill(0));
     let score = 0;
-    let highScore = parseInt(localStorage.getItem('bb_hs')) || 40455;
+    // Real user High Score (Starts from 0)
+    let highScore = parseInt(localStorage.getItem('bb_real_high')) || 0;
     let dockItems = [null, null, null];
 
     const SHAPES = [
-      [[1]], // Dot
-      [[1, 1]], // 2-Line H
-      [[1], [1]], // 2-Line V
-      [[1, 1, 1]], // 3-Line H
-      [[1], [1], [1]], // 3-Line V
-      [[1, 1], [1, 1]], // 2x2 Square
-      [[1, 1, 1], [1, 1, 1], [1, 1, 1]], // 3x3 Square
+      [[1]], // 1x1
+      [[1, 1]], // 1x2 H
+      [[1], [1]], // 2x1 V
+      [[1, 1, 1]], // 1x3 H
+      [[1], [1], [1]], // 3x1 V
+      [[1, 1], [1, 1]], // 2x2
+      [[1, 1, 1], [1, 1, 1], [1, 1, 1]], // 3x3
       [[1, 0], [1, 1]], // Corner small
-      [[1, 0, 0], [1, 0, 0], [1, 1, 1]], // L shape
-      [[1, 1, 1], [0, 1, 0]] // T shape
+      [[1, 0, 0], [1, 0, 0], [1, 1, 1]], // L
+      [[1, 1, 1], [0, 1, 0]] // T
     ];
 
-    // INITIALIZATION
     window.addEventListener('load', () => {
-      // 1. Splash screen for 2.2 seconds
       setTimeout(() => {
         document.getElementById('splashScreen').classList.remove('active');
         document.getElementById('menuScreen').classList.add('active');
-      }, 2200);
+      }, 2000);
 
       initGridUI();
       document.getElementById('highScoreText').innerText = highScore;
@@ -531,10 +529,11 @@
       return wrap;
     }
 
-    // TOUCH & DRAG SYSTEM
+    // PERFECT TOUCH & DRAG SYSTEM
     let activeDragIdx = null;
     let activeShapeMatrix = null;
     const floating = document.getElementById('floatingDrag');
+    const DRAG_OFFSET_Y = 70; // Finger karta upar dekhase jethi ungli block ne hide na kare
 
     function setupDragListeners(element, index, matrix) {
       element.addEventListener('pointerdown', (e) => {
@@ -546,8 +545,7 @@
         floating.appendChild(createShapeElement(matrix, 38));
         floating.style.display = 'block';
 
-        // Block ungli thi 60px upar dekhase jethi finger hide na kare
-        updateFloatingPosition(e.clientX, e.clientY - 60);
+        updateFloatingPosition(e.clientX, e.clientY - DRAG_OFFSET_Y);
         element.style.opacity = '0';
         playBeep(450);
       });
@@ -555,14 +553,14 @@
 
     window.addEventListener('pointermove', (e) => {
       if (activeDragIdx === null) return;
-      const targetY = e.clientY - 60;
+      const targetY = e.clientY - DRAG_OFFSET_Y;
       updateFloatingPosition(e.clientX, targetY);
       checkHoverPreview(e.clientX, targetY);
     });
 
     window.addEventListener('pointerup', (e) => {
       if (activeDragIdx === null) return;
-      const targetY = e.clientY - 60;
+      const targetY = e.clientY - DRAG_OFFSET_Y;
       finalizePlacement(e.clientX, targetY);
 
       floating.style.display = 'none';
@@ -577,14 +575,22 @@
       floating.style.top = y + 'px';
     }
 
+    // ACCURATE TOP-LEFT GRID MAPPING
     function getGridCoordsFromPoint(x, y) {
-      const gridRect = document.getElementById('gameGrid').getBoundingClientRect();
-      if (x < gridRect.left || x > gridRect.right || y < gridRect.top || y > gridRect.bottom) {
-        return null;
-      }
-      const cellSize = gridRect.width / 8;
-      const c = Math.floor((x - gridRect.left) / cellSize);
-      const r = Math.floor((y - gridRect.top) / cellSize);
+      const gridEl = document.getElementById('gameGrid');
+      const rect = gridEl.getBoundingClientRect();
+      const cellSize = rect.width / 8;
+
+      const shapeH = activeShapeMatrix.length;
+      const shapeW = activeShapeMatrix[0].length;
+
+      // Center-aligned offset: Block na center mathi top-left corner shodho
+      const topLeftX = x - (shapeW * cellSize) / 2;
+      const topLeftY = y - (shapeH * cellSize) / 2;
+
+      const c = Math.round((topLeftX - rect.left) / cellSize);
+      const r = Math.round((topLeftY - rect.top) / cellSize);
+
       return { r, c };
     }
 
@@ -614,7 +620,7 @@
     function canPlaceShape(matrix, r, c) {
       const h = matrix.length;
       const w = matrix[0].length;
-      if (r + h > 8 || c + w > 8 || r < 0 || c < 0) return false;
+      if (r < 0 || c < 0 || r + h > 8 || c + w > 8) return false;
 
       for (let i = 0; i < h; i++) {
         for (let j = 0; j < w; j++) {
@@ -656,7 +662,7 @@
       }
     }
 
-    // LINE CLEARING & PARTICLES
+    // LINE CLEARING
     function clearLines() {
       let fullRows = [];
       let fullCols = [];
@@ -708,7 +714,7 @@
       document.getElementById('scoreText').innerText = score;
       if (score > highScore) {
         highScore = score;
-        localStorage.setItem('bb_hs', highScore);
+        localStorage.setItem('bb_real_high', highScore);
         document.getElementById('highScoreText').innerText = highScore;
       }
     }
@@ -738,6 +744,4 @@
         }, 300);
       }
     }
-  </script>
-</body>
-</html>
+  </scri
