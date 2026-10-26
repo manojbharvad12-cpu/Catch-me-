@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="gu">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -112,14 +112,14 @@
 
   <canvas id="gameCanvas"></canvas>
 
-  <!-- NO SPACE LEFT / GAME OVER MODAL -->
+  <!-- CLEAN GAME OVER MODAL -->
   <div class="modal-overlay" id="gameOverModal">
     <div class="gameover-box">
       <div class="gameover-tag">NO SPACE LEFT!</div>
-      <div class="gameover-sub">Koi jagya bachi nathi</div>
+      <div class="gameover-sub">Try to clear more lines next time</div>
 
       <div class="score-res-box">
-        <div style="font-size:12px; color:#94a3b8; font-weight:800;">FINAL SCORE</div>
+        <div style="font-size:12px; color:#94a3b8; font-weight:800; letter-spacing:1px;">FINAL SCORE</div>
         <div class="score-res-val" id="resScore">0</div>
       </div>
 
@@ -159,7 +159,7 @@
       } catch(e){}
     }
 
-    // GAME STATE
+    // GAME STATE & PERMANENT HIGH SCORE STORAGE
     const BOARD_LEFT = 24;
     const BOARD_TOP = 155;
     const BOARD_SIZE = 332;
@@ -167,7 +167,8 @@
 
     let grid = Array(8).fill(null).map(() => Array(8).fill(0));
     let score = 0;
-    let highScore = parseInt(localStorage.getItem('bb_user_highscore')) || 0;
+    // Guaranteed all-time High Score from phone memory
+    let highScore = parseInt(localStorage.getItem('bb_alltime_high')) || 0;
     let combo = 0;
     let particles = [];
     let popups = [];
@@ -194,9 +195,8 @@
     let dock = [null, null, null];
     let dragging = null;
 
-    // RETENTION LOGIC: SMART SPAWN GENERATOR
+    // RETENTION ENGINE: LINE SAVER & DIFFICULTY CONTROLLER
     function spawnSmartDock() {
-      // 1. Scan board: Ketli rows & cols blast thava na aare chhe?
       let nearFullLines = [];
       for(let r=0; r<8; r++) {
         let filled = grid[r].filter(v => v === 1).length;
@@ -209,8 +209,7 @@
       }
 
       for(let i=0; i<3; i++) {
-        // High score 90k sudhi: 80% player ne blast karava mate exact savior block aapo
-        if(score < 90000 && nearFullLines.length > 0 && Math.random() < 0.75) {
+        if(score < 90000 && nearFullLines.length > 0 && Math.random() < 0.78) {
           const target = nearFullLines[Math.floor(Math.random() * nearFullLines.length)];
           if(target.empty <= 2) {
             dock[i] = (Math.random() < 0.5) ? PIECE_1X1 : (target.type === 'r' ? PIECE_1X2 : PIECE_2X1);
@@ -219,18 +218,15 @@
           }
         } 
         else if (score < 90000) {
-          // Easy to moderate pieces
           const pool = [PIECE_1X1, PIECE_1X2, PIECE_2X1, PIECE_1X3, PIECE_3X1, PIECE_2X2];
           dock[i] = pool[Math.floor(Math.random() * pool.length)];
         } 
         else {
-          // 90k+ High score cross thaya pachhi: Thoda challenging pieces
           const pool = [PIECE_2X2, PIECE_L, PIECE_T, PIECE_1X3, PIECE_3X1, PIECE_3X3];
           dock[i] = pool[Math.floor(Math.random() * pool.length)];
         }
       }
 
-      // Check karo: Shu aama thi ek pan block mukay tem chhe?
       checkNoSpaceLeft();
     }
 
@@ -253,7 +249,12 @@
       }
 
       if(!canPlaceAny) {
-        // NO SPACE LEFT TRIGGER
+        // High score sync before showing modal
+        if(score > highScore) {
+          highScore = score;
+          localStorage.setItem('bb_alltime_high', highScore);
+        }
+
         setTimeout(() => {
           document.getElementById('resScore').innerText = score;
           document.getElementById('gameOverModal').classList.add('active');
@@ -269,7 +270,7 @@
       spawnSmartDock();
     }
 
-    // DRAW 3D BEVEL BLOCK
+    // 3D BEVEL DRAWING
     function draw3DBlock(x, y, size, alpha = 1) {
       ctx.save();
       ctx.globalAlpha = alpha;
@@ -279,7 +280,7 @@
       ctx.roundRect(x, y, size, size, 5);
       ctx.fill();
 
-      // Top Highlights
+      // Top Highlight
       ctx.fillStyle = BLOCK_PALETTE.top;
       ctx.beginPath();
       ctx.moveTo(x, y); ctx.lineTo(x + size, y);
@@ -291,7 +292,7 @@
       ctx.lineTo(x + 4, y + size - 4); ctx.lineTo(x, y + size);
       ctx.closePath(); ctx.fill();
 
-      // Bottom Shadows
+      // Bottom Shadow
       ctx.fillStyle = BLOCK_PALETTE.bottom;
       ctx.beginPath();
       ctx.moveTo(x, y + size); ctx.lineTo(x + 4, y + size - 4);
@@ -303,21 +304,20 @@
       ctx.lineTo(x + size - 4, y + size - 4); ctx.lineTo(x + size - 4, y + 4);
       ctx.closePath(); ctx.fill();
 
-      // Soft center
       ctx.fillStyle = BLOCK_PALETTE.center;
       ctx.fillRect(x + 6, y + 6, size - 12, size - 12);
 
       ctx.restore();
     }
 
-    // MAIN RENDER LOOP (60 FPS)
+    // 60FPS RENDERING
     let diamondRot = 0;
     function render() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.save();
       ctx.scale(scale, scale);
 
-      // 1. TOP HEADER (Crown + High Score + Home)
+      // 1. ALL-TIME HIGH SCORE (Crown + Value)
       ctx.fillStyle = '#ffd166';
       ctx.font = '900 20px sans-serif';
       ctx.textAlign = 'left';
@@ -327,7 +327,7 @@
       ctx.font = '22px sans-serif';
       ctx.fillText('⚙️', 332, 46);
 
-      // 2. ROTATING RAINBOW DIAMOND BEHIND SCORE
+      // 2. DIAMOND ROTATION
       diamondRot += 0.02;
       const scoreX = 190;
       const scoreY = 96;
@@ -343,7 +343,7 @@
       ctx.fillRect(-20, -20, 40, 40);
       ctx.restore();
 
-      // 3. MAIN SCORE (Rainbow Style)
+      // 3. CURRENT SCORE
       const rainbowGrad = ctx.createLinearGradient(120, 0, 260, 0);
       rainbowGrad.addColorStop(0, '#4cc9f0');
       rainbowGrad.addColorStop(0.3, '#72efdd');
@@ -439,7 +439,7 @@
       }
       ctx.globalAlpha = 1;
 
-      // 9. POPUPS (+105, Combo 3!)
+      // 9. POPUPS
       for(let i = popups.length - 1; i >= 0; i--) {
         const pop = popups[i];
         ctx.save();
@@ -461,7 +461,7 @@
     }
     requestAnimationFrame(render);
 
-    // TOUCH HANDLERS
+    // TOUCH LOGIC
     function getPos(e) {
       const rect = canvas.getBoundingClientRect();
       const cx = e.touches ? e.touches[0].clientX : e.clientX;
@@ -516,6 +516,12 @@
         score += placedCount * 10;
         playBeep(320);
 
+        // Instant High Score Update
+        if(score > highScore) {
+          highScore = score;
+          localStorage.setItem('bb_alltime_high', highScore);
+        }
+
         checkLineClears();
 
         if(dock.every(s => s === null)) {
@@ -552,7 +558,6 @@
       return true;
     }
 
-    // LINE CLEARING & PARTICLE FX
     function checkLineClears() {
       let rClears = [];
       let cClears = [];
@@ -573,7 +578,7 @@
 
         if(score > highScore) {
           highScore = score;
-          localStorage.setItem('bb_user_highscore', highScore);
+          localStorage.setItem('bb_alltime_high', highScore);
         }
 
         popups.push({
@@ -624,7 +629,7 @@
       }
     }
 
-    // INIT
+    // START GAME
     spawnSmartDock();
   </script>
 </body>
