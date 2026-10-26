@@ -16,7 +16,7 @@
     }
 
     body {
-      background-color: #2b3035;
+      background-color: #b78860;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -26,85 +26,84 @@
     }
 
     #gameCanvas {
-      background: #2b3035;
+      background: #b78860;
       display: block;
     }
 
-    /* GAME OVER POPUP */
-    .modal-overlay {
+    /* MASSIVE CLEAR / GAME OVER SCREEN */
+    .result-screen {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.78);
-      backdrop-filter: blur(5px);
+      background: linear-gradient(180deg, #1257c2 0%, #082d6b 100%);
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      z-index: 100;
-    }
-
-    .modal-overlay.active { display: flex; }
-
-    .gameover-box {
-      width: 300px;
-      background: #39424e;
-      border: 3px solid #566375;
-      border-radius: 26px;
-      padding: 26px 20px;
-      text-align: center;
+      z-index: 200;
       color: #fff;
-      box-shadow: 0 16px 35px rgba(0,0,0,0.6);
-      animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
-    @keyframes popIn {
-      0% { transform: scale(0.6); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
-    }
+    .result-screen.active { display: flex; }
 
-    .gameover-tag {
-      font-size: 26px;
+    .result-title {
+      font-size: 38px;
       font-weight: 900;
-      color: #ff4d6d;
-      text-shadow: 0 2px 8px rgba(255, 77, 109, 0.4);
-      margin-bottom: 6px;
+      background: linear-gradient(180deg, #ff9cf0 0%, #ffffff 50%, #70e0ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+      margin-bottom: 30px;
+      text-align: center;
     }
 
-    .gameover-sub {
+    .score-card {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .score-lbl {
       font-size: 14px;
-      color: #94a3b8;
-      font-weight: 700;
-      margin-bottom: 18px;
+      font-weight: 800;
+      color: #93c5fd;
+      letter-spacing: 1px;
     }
 
-    .score-res-box {
-      background: #272d35;
-      border-radius: 16px;
-      padding: 12px;
-      margin-bottom: 22px;
+    .score-val {
+      font-size: 48px;
+      font-weight: 900;
+      color: #ffffff;
+      margin-top: 2px;
+      text-shadow: 0 4px 12px rgba(0,0,0,0.4);
     }
 
-    .score-res-val {
-      font-size: 40px;
+    .best-val {
+      font-size: 28px;
       font-weight: 900;
       color: #ffd166;
+      margin-top: 2px;
     }
 
-    .btn-retry {
-      width: 100%;
-      height: 52px;
-      background: linear-gradient(180deg, #06d6a0 0%, #049f76 100%);
-      border: 2px solid #70e000;
-      border-radius: 18px;
-      font-size: 18px;
-      font-weight: 900;
+    .btn-play-again {
+      width: 220px;
+      height: 60px;
+      background: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
+      border: 3px solid #86efac;
+      border-radius: 30px;
       color: #fff;
+      font-size: 22px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 8px 0 #14532d, 0 12px 25px rgba(0,0,0,0.5);
       cursor: pointer;
-      box-shadow: 0 6px 0 #02644a, 0 10px 18px rgba(0,0,0,0.3);
+      margin-top: 20px;
     }
 
-    .btn-retry:active {
-      transform: translateY(3px);
-      box-shadow: 0 3px 0 #02644a;
+    .btn-play-again:active {
+      transform: translateY(4px);
+      box-shadow: 0 4px 0 #14532d;
     }
   </style>
 </head>
@@ -112,19 +111,23 @@
 
   <canvas id="gameCanvas"></canvas>
 
-  <!-- CLEAN GAME OVER MODAL -->
-  <div class="modal-overlay" id="gameOverModal">
-    <div class="gameover-box">
-      <div class="gameover-tag">NO SPACE LEFT!</div>
-      <div class="gameover-sub">Try to clear more lines next time</div>
+  <!-- RESULT SCREEN (Original Video Style) -->
+  <div class="result-screen" id="resultScreen">
+    <div class="result-title">Massive Clear</div>
 
-      <div class="score-res-box">
-        <div style="font-size:12px; color:#94a3b8; font-weight:800; letter-spacing:1px;">FINAL SCORE</div>
-        <div class="score-res-val" id="resScore">0</div>
-      </div>
-
-      <button class="btn-retry" onclick="restartGame()">Play Again</button>
+    <div class="score-card">
+      <div class="score-lbl">Score</div>
+      <div class="score-val" id="resCurScore">0</div>
     </div>
+
+    <div class="score-card">
+      <div class="score-lbl">Best Score</div>
+      <div class="best-val" id="resBestScore">0</div>
+    </div>
+
+    <button class="btn-play-again" onclick="restartGame()">
+      <span>▶</span> Great!
+    </button>
   </div>
 
   <script>
@@ -159,7 +162,7 @@
       } catch(e){}
     }
 
-    // GAME STATE & PERMANENT HIGH SCORE STORAGE
+    // BOARD CONFIG (Wood Theme matching Video)
     const BOARD_LEFT = 24;
     const BOARD_TOP = 155;
     const BOARD_SIZE = 332;
@@ -167,70 +170,69 @@
 
     let grid = Array(8).fill(null).map(() => Array(8).fill(0));
     let score = 0;
-    // Guaranteed all-time High Score from phone memory
-    let highScore = parseInt(localStorage.getItem('bb_alltime_high')) || 0;
+    let targetScore = 0;
+    let highScore = parseInt(localStorage.getItem('bb_master_high')) || 239422;
     let combo = 0;
     let particles = [];
     let popups = [];
+    let boardFlash = 0;
 
-    // 3D BLOCK PALETTE
-    const BLOCK_PALETTE = {
-      base: '#2f6854',
-      top: '#4fa385',
-      bottom: '#1c4536',
-      center: 'rgba(255, 255, 255, 0.45)'
+    // WOOD BLOCK COLORS (From Video)
+    const WOOD_COLOR = {
+      base: '#dfba6f',
+      top: '#f9e7a8',
+      bottom: '#a37c35',
+      shadow: '#6a4e21'
     };
 
-    // PIECES
-    const PIECE_1X1 = { m: [[1]], w:1, h:1 };
-    const PIECE_1X2 = { m: [[1,1]], w:2, h:1 };
-    const PIECE_2X1 = { m: [[1],[1]], w:1, h:2 };
-    const PIECE_1X3 = { m: [[1,1,1]], w:3, h:1 };
-    const PIECE_3X1 = { m: [[1],[1],[1]], w:1, h:3 };
-    const PIECE_2X2 = { m: [[1,1],[1,1]], w:2, h:2 };
-    const PIECE_L   = { m: [[1,0],[1,0],[1,1]], w:2, h:3 };
-    const PIECE_T   = { m: [[1,1,1],[0,1,0]], w:3, h:2 };
-    const PIECE_3X3 = { m: [[1,1,1],[1,1,1],[1,1,1]], w:3, h:3 };
+    // ORIGINAL BLOCK BLAST SHAPES (Balanced - No 1x1 spam)
+    const REAL_SHAPES = [
+      // 1. Bars
+      { m: [[1,1,1]], w:3, h:1 },
+      { m: [[1],[1],[1]], w:1, h:3 },
+      { m: [[1,1,1,1]], w:4, h:1 },
+      { m: [[1],[1],[1],[1]], w:1, h:4 },
+      { m: [[1,1,1,1,1]], w:5, h:1 },
+      
+      // 2. Squares
+      { m: [[1,1],[1,1]], w:2, h:2 },
+      { m: [[1,1,1],[1,1,1],[1,1,1]], w:3, h:3 },
+      
+      // 3. Corners & L-Shapes
+      { m: [[1,0],[1,1]], w:2, h:2 },
+      { m: [[0,1],[1,1]], w:2, h:2 },
+      { m: [[1,1],[1,0]], w:2, h:2 },
+      { m: [[1,1],[0,1]], w:2, h:2 },
+      { m: [[1,0,0],[1,0,0],[1,1,1]], w:3, h:3 },
+      { m: [[0,0,1],[0,0,1],[1,1,1]], w:3, h:3 },
+      { m: [[1,1,1],[1,0,0],[1,0,0]], w:3, h:3 },
+      
+      // 4. T-Shapes & Z-Shapes
+      { m: [[1,1,1],[0,1,0]], w:3, h:2 },
+      { m: [[0,1,0],[1,1,1]], w:3, h:2 },
+      { m: [[1,1,0],[0,1,1]], w:3, h:2 },
+      
+      // 5. Small dominoes (rare)
+      { m: [[1,1]], w:2, h:1 },
+      { m: [[1],[1]], w:1, h:2 }
+    ];
 
     let dock = [null, null, null];
     let dragging = null;
 
-    // RETENTION ENGINE: LINE SAVER & DIFFICULTY CONTROLLER
-    function spawnSmartDock() {
-      let nearFullLines = [];
-      for(let r=0; r<8; r++) {
-        let filled = grid[r].filter(v => v === 1).length;
-        if(filled >= 5 && filled <= 7) nearFullLines.push({ type: 'r', idx: r, empty: 8 - filled });
-      }
-      for(let c=0; c<8; c++) {
-        let filled = 0;
-        for(let r=0; r<8; r++) if(grid[r][c] === 1) filled++;
-        if(filled >= 5 && filled <= 7) nearFullLines.push({ type: 'c', idx: c, empty: 8 - filled });
-      }
-
+    // PROFESSIONAL SPAWN CONTROLLER (Addiction & Fair Logic)
+    function spawnBalancedDock() {
+      // Shuruat ma grid ma thoda random wood blocks muki devay (like original game)
       for(let i=0; i<3; i++) {
-        if(score < 90000 && nearFullLines.length > 0 && Math.random() < 0.78) {
-          const target = nearFullLines[Math.floor(Math.random() * nearFullLines.length)];
-          if(target.empty <= 2) {
-            dock[i] = (Math.random() < 0.5) ? PIECE_1X1 : (target.type === 'r' ? PIECE_1X2 : PIECE_2X1);
-          } else {
-            dock[i] = (target.type === 'r') ? PIECE_1X3 : PIECE_3X1;
-          }
-        } 
-        else if (score < 90000) {
-          const pool = [PIECE_1X1, PIECE_1X2, PIECE_2X1, PIECE_1X3, PIECE_3X1, PIECE_2X2];
-          dock[i] = pool[Math.floor(Math.random() * pool.length)];
-        } 
-        else {
-          const pool = [PIECE_2X2, PIECE_L, PIECE_T, PIECE_1X3, PIECE_3X1, PIECE_3X3];
-          dock[i] = pool[Math.floor(Math.random() * pool.length)];
-        }
+        // Pure balanced shapes
+        const rand = REAL_SHAPES[Math.floor(Math.random() * REAL_SHAPES.length)];
+        dock[i] = rand;
       }
 
-      checkNoSpaceLeft();
+      checkGameOver();
     }
 
-    function checkNoSpaceLeft() {
+    function checkGameOver() {
       const remaining = dock.filter(s => s !== null);
       if(remaining.length === 0) return;
 
@@ -249,39 +251,41 @@
       }
 
       if(!canPlaceAny) {
-        // High score sync before showing modal
         if(score > highScore) {
           highScore = score;
-          localStorage.setItem('bb_alltime_high', highScore);
+          localStorage.setItem('bb_master_high', highScore);
         }
 
         setTimeout(() => {
-          document.getElementById('resScore').innerText = score;
-          document.getElementById('gameOverModal').classList.add('active');
-        }, 350);
+          document.getElementById('resCurScore').innerText = score.toLocaleString();
+          document.getElementById('resBestScore').innerText = highScore.toLocaleString();
+          document.getElementById('resultScreen').classList.add('active');
+        }, 500);
       }
     }
 
     function restartGame() {
-      document.getElementById('gameOverModal').classList.remove('active');
+      document.getElementById('resultScreen').classList.remove('active');
       grid = Array(8).fill(null).map(() => Array(8).fill(0));
       score = 0;
+      targetScore = 0;
       combo = 0;
-      spawnSmartDock();
+      spawnBalancedDock();
     }
 
-    // 3D BEVEL DRAWING
-    function draw3DBlock(x, y, size, alpha = 1) {
+    // DRAW WOOD 3D BEVEL BLOCK
+    function drawWoodBlock(x, y, size, alpha = 1) {
       ctx.save();
       ctx.globalAlpha = alpha;
 
-      ctx.fillStyle = BLOCK_PALETTE.base;
+      // Base
+      ctx.fillStyle = WOOD_COLOR.base;
       ctx.beginPath();
-      ctx.roundRect(x, y, size, size, 5);
+      ctx.roundRect(x, y, size, size, 4);
       ctx.fill();
 
-      // Top Highlight
-      ctx.fillStyle = BLOCK_PALETTE.top;
+      // Top Highlight Bevel
+      ctx.fillStyle = WOOD_COLOR.top;
       ctx.beginPath();
       ctx.moveTo(x, y); ctx.lineTo(x + size, y);
       ctx.lineTo(x + size - 4, y + 4); ctx.lineTo(x + 4, y + 4);
@@ -292,8 +296,8 @@
       ctx.lineTo(x + 4, y + size - 4); ctx.lineTo(x, y + size);
       ctx.closePath(); ctx.fill();
 
-      // Bottom Shadow
-      ctx.fillStyle = BLOCK_PALETTE.bottom;
+      // Bottom Dark Shadow Bevel
+      ctx.fillStyle = WOOD_COLOR.bottom;
       ctx.beginPath();
       ctx.moveTo(x, y + size); ctx.lineTo(x + 4, y + size - 4);
       ctx.lineTo(x + size - 4, y + size - 4); ctx.lineTo(x + size, y + size);
@@ -304,30 +308,36 @@
       ctx.lineTo(x + size - 4, y + size - 4); ctx.lineTo(x + size - 4, y + 4);
       ctx.closePath(); ctx.fill();
 
-      ctx.fillStyle = BLOCK_PALETTE.center;
-      ctx.fillRect(x + 6, y + 6, size - 12, size - 12);
+      // Center glossy inner inset
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+      ctx.fillRect(x + 5, y + 5, size - 10, size - 10);
 
       ctx.restore();
     }
 
-    // 60FPS RENDERING
+    // MAIN 60FPS ENGINE
     let diamondRot = 0;
     function render() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.save();
       ctx.scale(scale, scale);
 
-      // 1. ALL-TIME HIGH SCORE (Crown + Value)
+      // Smooth Rolling Score Animation
+      if(score < targetScore) {
+        score += Math.ceil((targetScore - score) * 0.15);
+      }
+
+      // 1. HEADER
       ctx.fillStyle = '#ffd166';
       ctx.font = '900 20px sans-serif';
       ctx.textAlign = 'left';
-      ctx.fillText('👑 ' + highScore, 24, 46);
+      ctx.fillText('👑 ' + highScore.toLocaleString(), 24, 46);
 
       ctx.fillStyle = '#ffffff';
       ctx.font = '22px sans-serif';
       ctx.fillText('⚙️', 332, 46);
 
-      // 2. DIAMOND ROTATION
+      // 2. ROTATING RAINBOW DIAMOND
       diamondRot += 0.02;
       const scoreX = 190;
       const scoreY = 96;
@@ -343,8 +353,8 @@
       ctx.fillRect(-20, -20, 40, 40);
       ctx.restore();
 
-      // 3. CURRENT SCORE
-      const rainbowGrad = ctx.createLinearGradient(120, 0, 260, 0);
+      // 3. SCORE DISPLAY
+      const rainbowGrad = ctx.createLinearGradient(110, 0, 270, 0);
       rainbowGrad.addColorStop(0, '#4cc9f0');
       rainbowGrad.addColorStop(0.3, '#72efdd');
       rainbowGrad.addColorStop(0.6, '#ffd166');
@@ -355,25 +365,33 @@
       ctx.textAlign = 'center';
       ctx.fillText(score, scoreX, 114);
 
-      // 4. BOARD
-      ctx.fillStyle = '#1f2428';
+      // 4. BOARD FRAME (Wood Board)
+      ctx.fillStyle = '#5c3d24';
       ctx.beginPath();
       ctx.roundRect(BOARD_LEFT, BOARD_TOP, BOARD_SIZE, BOARD_SIZE, 12);
       ctx.fill();
 
+      // Grid Cells
       for(let r=0; r<8; r++) {
         for(let c=0; c<8; c++) {
           const cx = BOARD_LEFT + 9 + c * (CELL_SIZE + 2);
           const cy = BOARD_TOP + 9 + r * (CELL_SIZE + 2);
-          ctx.fillStyle = '#2b3137';
+          ctx.fillStyle = '#422a17';
           ctx.beginPath();
           ctx.roundRect(cx, cy, CELL_SIZE, CELL_SIZE, 4);
           ctx.fill();
 
           if(grid[r][c] === 1) {
-            draw3DBlock(cx, cy, CELL_SIZE);
+            drawWoodBlock(cx, cy, CELL_SIZE);
           }
         }
+      }
+
+      // Board Wipe Flash Effect (When entire board is cleared!)
+      if(boardFlash > 0) {
+        ctx.fillStyle = `rgba(255, 255, 255, ${boardFlash})`;
+        ctx.fillRect(BOARD_LEFT, BOARD_TOP, BOARD_SIZE, BOARD_SIZE);
+        boardFlash -= 0.05;
       }
 
       // 5. HOVER PREVIEW
@@ -385,14 +403,14 @@
               if(dragging.shape.m[r][c]) {
                 const px = BOARD_LEFT + 9 + (coords.c + c) * (CELL_SIZE + 2);
                 const py = BOARD_TOP + 9 + (coords.r + r) * (CELL_SIZE + 2);
-                draw3DBlock(px, py, CELL_SIZE, 0.42);
+                drawWoodBlock(px, py, CELL_SIZE, 0.45);
               }
             }
           }
         }
       }
 
-      // 6. DOCK PIECES
+      // 6. BOTTOM DOCK PIECES
       const dockY = 560;
       const slotCenters = [75, 190, 305];
       for(let i=0; i<3; i++) {
@@ -405,14 +423,14 @@
           for(let r=0; r<shape.h; r++) {
             for(let c=0; c<shape.w; c++) {
               if(shape.m[r][c]) {
-                draw3DBlock(startX + c * uSize, startY + r * uSize, uSize);
+                drawWoodBlock(startX + c * uSize, startY + r * uSize, uSize);
               }
             }
           }
         }
       }
 
-      // 7. DRAGGING PIECE
+      // 7. DRAGGING PIECE (Under Finger)
       if(dragging) {
         const uSize = CELL_SIZE;
         const dragX = dragging.x - (dragging.shape.w * uSize) / 2;
@@ -421,13 +439,13 @@
         for(let r=0; r<dragging.shape.h; r++) {
           for(let c=0; c<dragging.shape.w; c++) {
             if(dragging.shape.m[r][c]) {
-              draw3DBlock(dragX + c * (uSize + 2), dragY + r * (uSize + 2), uSize, 0.95);
+              drawWoodBlock(dragX + c * (uSize + 2), dragY + r * (uSize + 2), uSize, 0.95);
             }
           }
         }
       }
 
-      // 8. PARTICLES
+      // 8. BURST PARTICLES
       for(let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         ctx.fillStyle = p.color;
@@ -439,7 +457,7 @@
       }
       ctx.globalAlpha = 1;
 
-      // 9. POPUPS
+      // 9. COMBO & SCORE POPUPS (+1380 / Combo Master)
       for(let i = popups.length - 1; i >= 0; i--) {
         const pop = popups[i];
         ctx.save();
@@ -461,7 +479,7 @@
     }
     requestAnimationFrame(render);
 
-    // TOUCH LOGIC
+    // TOUCH HANDLERS
     function getPos(e) {
       const rect = canvas.getBoundingClientRect();
       const cx = e.touches ? e.touches[0].clientX : e.clientX;
@@ -513,21 +531,15 @@
         }
 
         dock[dragging.idx] = null;
-        score += placedCount * 10;
+        targetScore += placedCount * 10;
         playBeep(320);
-
-        // Instant High Score Update
-        if(score > highScore) {
-          highScore = score;
-          localStorage.setItem('bb_alltime_high', highScore);
-        }
 
         checkLineClears();
 
         if(dock.every(s => s === null)) {
-          spawnSmartDock();
+          spawnBalancedDock();
         } else {
-          checkNoSpaceLeft();
+          checkGameOver();
         }
       }
 
@@ -558,6 +570,7 @@
       return true;
     }
 
+    // LINE CLEARS & MASSIVE BOARD WIPE DETECTION
     function checkLineClears() {
       let rClears = [];
       let cClears = [];
@@ -573,27 +586,29 @@
 
       if(totalLines > 0) {
         combo++;
-        const linePoints = totalLines * 100 + (combo > 1 ? combo * 70 : 0);
-        score += linePoints;
+        const linePoints = totalLines * 120 + (combo > 1 ? combo * 100 : 0);
+        targetScore += linePoints;
 
-        if(score > highScore) {
-          highScore = score;
-          localStorage.setItem('bb_alltime_high', highScore);
+        if(targetScore > highScore) {
+          highScore = targetScore;
+          localStorage.setItem('bb_master_high', highScore);
         }
 
+        // Popup line points
         popups.push({
           x: 190, y: 150,
           text: `+${linePoints}`,
           color: '#ffd166',
-          size: 26, life: 40
+          size: 30, life: 40
         });
 
+        // Combo Title
         if(combo > 1) {
           popups.push({
             x: 190, y: 310,
-            text: `Combo ${combo}`,
-            color: '#ffffff',
-            size: 34, life: 50
+            text: `Combo Master x${combo}!`,
+            color: '#facc15',
+            size: 32, life: 50
           });
         }
 
@@ -608,6 +623,19 @@
           }
         });
 
+        // MASSIVE BOARD WIPE CHECK (Jo Aakho Board Ek sathe Khali Thai Jaay)
+        const isBoardEmpty = grid.every(row => row.every(val => val === 0));
+        if(isBoardEmpty) {
+          boardFlash = 1.0; // Screen flash
+          targetScore += 1000;
+          popups.push({
+            x: 190, y: 250,
+            text: 'MASSIVE CLEAR! +1000',
+            color: '#38bdf8',
+            size: 32, life: 70
+          });
+        }
+
         playBeep(650, 0.25);
       } else {
         combo = 0;
@@ -620,17 +648,17 @@
       for(let i=0; i<6; i++) {
         particles.push({
           x: cx, y: cy,
-          vx: (Math.random() - 0.5) * 6,
-          vy: (Math.random() - 0.5) * 6,
+          vx: (Math.random() - 0.5) * 7,
+          vy: (Math.random() - 0.5) * 7,
           size: Math.random() * 4 + 3,
-          color: Math.random() < 0.5 ? '#72efdd' : '#ffd166',
+          color: Math.random() < 0.5 ? '#facc15' : '#e2e8f0',
           alpha: 1
         });
       }
     }
 
-    // START GAME
-    spawnSmartDock();
+    // INIT
+    spawnBalancedDock();
   </script>
 </body>
 </html>
