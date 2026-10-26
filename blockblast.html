@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Block Blast Master Pro</title>
+  <title>Block Blast Pro</title>
   <style>
     * {
       box-sizing: border-box;
@@ -15,96 +15,69 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    body {
+    html, body {
+      width: 100%;
+      height: 100%;
       background-color: #b78860;
-      min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      transition: background-color 0.5s ease;
     }
 
     #gameCanvas {
       display: block;
-      background: transparent;
+      background: #b78860;
     }
 
-    /* RESULT SCREEN */
-    .result-screen {
+    /* CLEAN GAME OVER MODAL */
+    .gameover-overlay {
       display: none;
       position: fixed;
       inset: 0;
-      background: linear-gradient(180deg, #1257c2 0%, #082d6b 100%);
-      flex-direction: column;
+      background: rgba(0, 0, 0, 0.75);
       align-items: center;
       justify-content: center;
-      z-index: 200;
+      z-index: 1000;
+    }
+
+    .gameover-overlay.active { display: flex; }
+
+    .gameover-card {
+      width: 290px;
+      background: #39424e;
+      border: 3px solid #566375;
+      border-radius: 22px;
+      padding: 24px 18px;
+      text-align: center;
       color: #fff;
     }
 
-    .result-screen.active { display: flex; }
-
-    .result-title {
-      font-size: 38px;
-      font-weight: 900;
-      background: linear-gradient(180deg, #ff9cf0 0%, #ffffff 50%, #70e0ff 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
-      margin-bottom: 25px;
-      text-align: center;
-    }
-
-    .score-card {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    .score-lbl {
-      font-size: 14px;
-      font-weight: 800;
-      color: #93c5fd;
-      letter-spacing: 1px;
-    }
-
-    .score-val {
-      font-size: 46px;
-      font-weight: 900;
-      color: #ffffff;
-      margin-top: 2px;
-      text-shadow: 0 4px 12px rgba(0,0,0,0.4);
-    }
-
-    .best-val {
+    .gameover-title {
       font-size: 26px;
       font-weight: 900;
-      color: #ffd166;
-      margin-top: 2px;
+      color: #ff4d6d;
+      margin-bottom: 6px;
     }
 
-    .btn-play-again {
-      width: 220px;
-      height: 60px;
-      background: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
-      border: 3px solid #86efac;
-      border-radius: 30px;
-      color: #fff;
-      font-size: 22px;
+    .gameover-score {
+      font-size: 42px;
       font-weight: 900;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      box-shadow: 0 8px 0 #14532d, 0 12px 25px rgba(0,0,0,0.5);
-      cursor: pointer;
-      margin-top: 15px;
+      color: #ffd166;
+      margin: 12px 0 20px 0;
     }
 
-    .btn-play-again:active {
-      transform: translateY(4px);
-      box-shadow: 0 4px 0 #14532d;
+    .btn-retry {
+      width: 100%;
+      height: 50px;
+      background: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
+      border: 2px solid #86efac;
+      border-radius: 16px;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 900;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -112,128 +85,63 @@
 
   <canvas id="gameCanvas"></canvas>
 
-  <div class="result-screen" id="resultScreen">
-    <div class="result-title">Massive Clear</div>
-
-    <div class="score-card">
-      <div class="score-lbl">Score</div>
-      <div class="score-val" id="resCurScore">0</div>
+  <div class="gameover-overlay" id="gameOverModal">
+    <div class="gameover-card">
+      <div class="gameover-title">NO SPACE LEFT!</div>
+      <div style="font-size: 13px; color: #94a3b8;">Final Score</div>
+      <div class="gameover-score" id="resScore">0</div>
+      <button class="btn-retry" onclick="restartGame()">Play Again</button>
     </div>
-
-    <div class="score-card">
-      <div class="score-lbl">Best Score</div>
-      <div class="best-val" id="resBestScore">0</div>
-    </div>
-
-    <button class="btn-play-again" onclick="restartGame()">
-      <span>▶</span> Play Again
-    </button>
   </div>
 
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
-    // SAFE ROUNDRECT POLYFILL (Blank screen prevent karva mate)
-    if (!ctx.roundRect) {
-      ctx.roundRect = function(x, y, w, h, r) {
-        if (typeof r === 'undefined') r = 5;
-        this.beginPath();
-        this.moveTo(x + r, y);
-        this.lineTo(x + w - r, y);
-        this.quadraticCurveTo(x + w, y, x + w, y + r);
-        this.lineTo(x + w, y + h - r);
-        this.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-        this.lineTo(x + r, y + h);
-        this.quadraticCurveTo(x, y + h, x, y + h - r);
-        this.lineTo(x, y + r);
-        this.quadraticCurveTo(x, y, x + r, y);
-        this.closePath();
-        return this;
-      };
-    }
-
-    const VIEW_W = 380;
-    const VIEW_H = 760;
+    const V_WIDTH = 380;
+    const V_HEIGHT = 720;
     let scale = 1;
 
     function resize() {
-      const w = window.innerWidth || 380;
-      const h = window.innerHeight || 760;
-      scale = Math.min(w / VIEW_W, h / VIEW_H);
-      canvas.width = VIEW_W * scale;
-      canvas.height = VIEW_H * scale;
-    }
-    window.addEventListener('resize', resize);
-    resize();
-
-    // SAFE AUDIO (Pehla touch par initialize thase, script block nahi kare)
-    let audioCtx = null;
-    function playBeep(freq, dur = 0.08) {
-      try {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
-        osc.frequency.value = freq;
-        g.gain.setValueAtTime(0.12, audioCtx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
-        osc.connect(g);
-        g.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + dur);
-      } catch(e){}
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      scale = Math.min(w / V_WIDTH, h / V_HEIGHT);
+      if (scale <= 0) scale = 1;
+      canvas.width = Math.floor(V_WIDTH * scale);
+      canvas.height = Math.floor(V_HEIGHT * scale);
     }
 
-    // GAME CONFIG
-    const BOARD_LEFT = 24;
-    const BOARD_TOP = 155;
-    const BOARD_SIZE = 332;
-    const CELL_SIZE = (BOARD_SIZE - 18) / 8;
+    // BOARD CONSTANTS
+    const B_LEFT = 24;
+    const B_TOP = 140;
+    const B_SIZE = 332;
+    const CELL_SIZE = (B_SIZE - 18) / 8; // ~39.2px
 
     let grid = Array(8).fill(null).map(() => Array(8).fill(0));
     let score = 0;
-    let targetScore = 0;
     let highScore = parseInt(localStorage.getItem('bb_master_high')) || 239422;
     let combo = 0;
-    let currentTheme = 'wood';
-    let partyBulbTick = 0;
-
     let particles = [];
     let popups = [];
-    let mascotAnimation = null;
 
-    const THEMES = {
-      wood: {
-        bg: '#b78860',
-        boardFrame: '#5c3d24',
-        cellBg: '#422a17',
-        blockBase: '#dfba6f',
-        blockTop: '#f9e7a8',
-        blockBottom: '#a37c35'
-      },
-      party_blue: {
-        bg: '#253569',
-        boardFrame: '#1b2344',
-        cellBg: '#151c36',
-        blockBase: '#dfba6f',
-        blockTop: '#f9e7a8',
-        blockBottom: '#a37c35'
-      }
+    // REAL WOOD BLOCK COLORS
+    const WOOD = {
+      base: '#dfba6f',
+      top: '#f9e7a8',
+      bottom: '#a37c35'
     };
 
-    const REAL_SHAPES = [
+    // BALANCED SHAPES
+    const SHAPES = [
       { m: [[1,1,1]], w:3, h:1 },
       { m: [[1],[1],[1]], w:1, h:3 },
       { m: [[1,1,1,1]], w:4, h:1 },
       { m: [[1],[1],[1],[1]], w:1, h:4 },
       { m: [[1,1],[1,1]], w:2, h:2 },
-      { m: [[1,1,1],[1,1,1],[1,1,1]], w:3, h:3 },
       { m: [[1,0],[1,1]], w:2, h:2 },
       { m: [[0,1],[1,1]], w:2, h:2 },
       { m: [[1,1],[1,0]], w:2, h:2 },
       { m: [[1,1],[0,1]], w:2, h:2 },
-      { m: [[1,0,0],[1,0,0],[1,1,1]], w:3, h:3 },
       { m: [[1,1,1],[0,1,0]], w:3, h:2 },
       { m: [[1,1]], w:2, h:1 },
       { m: [[1],[1]], w:1, h:2 }
@@ -242,9 +150,9 @@
     let dock = [null, null, null];
     let dragging = null;
 
-    function spawnSmartDock() {
+    function spawnDock() {
       for (let i = 0; i < 3; i++) {
-        dock[i] = REAL_SHAPES[Math.floor(Math.random() * REAL_SHAPES.length)];
+        dock[i] = SHAPES[Math.floor(Math.random() * SHAPES.length)];
       }
       checkGameOver();
     }
@@ -272,185 +180,103 @@
           highScore = score;
           localStorage.setItem('bb_master_high', highScore);
         }
-
-        setTimeout(() => {
-          document.getElementById('resCurScore').innerText = score.toLocaleString();
-          document.getElementById('resBestScore').innerText = highScore.toLocaleString();
-          document.getElementById('resultScreen').classList.add('active');
-        }, 500);
+        document.getElementById('resScore').innerText = score.toLocaleString();
+        document.getElementById('gameOverModal').classList.add('active');
       }
     }
 
     function restartGame() {
-      document.getElementById('resultScreen').classList.remove('active');
+      document.getElementById('gameOverModal').classList.remove('active');
       grid = Array(8).fill(null).map(() => Array(8).fill(0));
       score = 0;
-      targetScore = 0;
       combo = 0;
-      switchTheme('wood');
-      spawnSmartDock();
+      spawnDock();
     }
 
-    function switchTheme(themeName) {
-      currentTheme = themeName;
-      document.body.style.backgroundColor = THEMES[themeName].bg;
-    }
-
-    // DRAW 3D BEVEL BLOCK
-    function draw3DBlock(x, y, size, alpha = 1) {
-      const th = THEMES[currentTheme];
+    // DRAW BLOCK FUNCTION
+    function drawBlock(x, y, size, alpha = 1) {
       ctx.save();
       ctx.globalAlpha = alpha;
 
-      ctx.fillStyle = th.blockBase;
-      ctx.beginPath();
-      ctx.roundRect(x, y, size, size, 4);
-      ctx.fill();
+      // Base
+      ctx.fillStyle = WOOD.base;
+      ctx.fillRect(x, y, size, size);
 
       // Top Highlight Bevel
-      ctx.fillStyle = th.blockTop;
-      ctx.beginPath();
-      ctx.moveTo(x, y); ctx.lineTo(x + size, y);
-      ctx.lineTo(x + size - 4, y + 4); ctx.lineTo(x + 4, y + 4);
-      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = WOOD.top;
+      ctx.fillRect(x, y, size, 4);
+      ctx.fillRect(x, y, 4, size);
 
-      ctx.beginPath();
-      ctx.moveTo(x, y); ctx.lineTo(x + 4, y + 4);
-      ctx.lineTo(x + 4, y + size - 4); ctx.lineTo(x, y + size);
-      ctx.closePath(); ctx.fill();
+      // Bottom Dark Bevel
+      ctx.fillStyle = WOOD.bottom;
+      ctx.fillRect(x, y + size - 4, size, 4);
+      ctx.fillRect(x + size - 4, y, 4, size);
 
-      // Bottom Dark Shadow Bevel
-      ctx.fillStyle = th.blockBottom;
-      ctx.beginPath();
-      ctx.moveTo(x, y + size); ctx.lineTo(x + 4, y + size - 4);
-      ctx.lineTo(x + size - 4, y + size - 4); ctx.lineTo(x + size, y + size);
-      ctx.closePath(); ctx.fill();
-
-      ctx.beginPath();
-      ctx.moveTo(x + size, y); ctx.lineTo(x + size, y + size);
-      ctx.lineTo(x + size - 4, y + size - 4); ctx.lineTo(x + size - 4, y + 4);
-      ctx.closePath(); ctx.fill();
-
-      // Center Shine
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.28)';
+      // Center
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
       ctx.fillRect(x + 5, y + 5, size - 10, size - 10);
 
       ctx.restore();
     }
 
-    // 60FPS RENDERING ENGINE
-    let diamondRot = 0;
-    function render() {
+    // MAIN LOOP
+    function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.save();
       ctx.scale(scale, scale);
 
-      const th = THEMES[currentTheme];
-
-      if (score < targetScore) {
-        score += Math.ceil((targetScore - score) * 0.15);
-      }
-
-      // 1. TOP STATS
+      // 1. TOP BAR
       ctx.fillStyle = '#ffd166';
       ctx.font = '900 20px sans-serif';
       ctx.textAlign = 'left';
-      ctx.fillText('👑 ' + highScore.toLocaleString(), 24, 46);
+      ctx.fillText('👑 ' + highScore.toLocaleString(), 24, 42);
 
       ctx.fillStyle = '#ffffff';
       ctx.font = '22px sans-serif';
-      ctx.fillText('⚙️', 332, 46);
+      ctx.fillText('⚙️', 332, 42);
 
-      // 2. DIAMOND ROTATION (RAINBOW)
-      diamondRot += 0.02;
-      const scoreX = 190;
-      const scoreY = 96;
-
-      ctx.save();
-      ctx.translate(scoreX, scoreY);
-      ctx.rotate(diamondRot);
-      const diaGrad = ctx.createLinearGradient(-26, -26, 26, 26);
-      diaGrad.addColorStop(0, '#f72585');
-      diaGrad.addColorStop(0.5, '#7209b7');
-      diaGrad.addColorStop(1, '#4cc9f0');
-      ctx.fillStyle = diaGrad;
-      ctx.fillRect(-20, -20, 40, 40);
-      ctx.restore();
-
-      // 3. SCORE TEXT
-      const rainbowGrad = ctx.createLinearGradient(110, 0, 270, 0);
-      rainbowGrad.addColorStop(0, '#4cc9f0');
-      rainbowGrad.addColorStop(0.3, '#72efdd');
-      rainbowGrad.addColorStop(0.6, '#ffd166');
-      rainbowGrad.addColorStop(1, '#ff4d6d');
-
-      ctx.fillStyle = rainbowGrad;
-      ctx.font = '900 52px sans-serif';
+      // 2. SCORE DISPLAY
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '900 50px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(score, scoreX, 114);
+      ctx.fillText(score, 190, 102);
 
-      // 4. BOARD FRAME
-      ctx.fillStyle = th.boardFrame;
-      ctx.beginPath();
-      ctx.roundRect(BOARD_LEFT, BOARD_TOP, BOARD_SIZE, BOARD_SIZE, 12);
-      ctx.fill();
-
-      if (currentTheme === 'party_blue') {
-        partyBulbTick += 0.08;
-        ctx.strokeStyle = '#c084fc';
-        ctx.lineWidth = 4;
-        ctx.strokeRect(BOARD_LEFT - 3, BOARD_TOP - 3, BOARD_SIZE + 6, BOARD_SIZE + 6);
-
-        const bulbCount = 16;
-        for (let i = 0; i < bulbCount; i++) {
-          const t = (i / bulbCount) * (BOARD_SIZE * 4);
-          let bx = BOARD_LEFT, by = BOARD_TOP;
-          if (t < BOARD_SIZE) { bx += t; }
-          else if (t < BOARD_SIZE * 2) { bx += BOARD_SIZE; by += (t - BOARD_SIZE); }
-          else if (t < BOARD_SIZE * 3) { bx += (BOARD_SIZE * 3 - t); by += BOARD_SIZE; }
-          else { by += (BOARD_SIZE * 4 - t); }
-
-          ctx.fillStyle = Math.sin(partyBulbTick + i) > 0 ? '#4ade80' : '#facc15';
-          ctx.beginPath();
-          ctx.arc(bx, by, 4.5, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
+      // 3. BOARD BACKGROUND
+      ctx.fillStyle = '#5c3d24';
+      ctx.fillRect(B_LEFT, B_TOP, B_SIZE, B_SIZE);
 
       // Grid Cells
       for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
-          const cx = BOARD_LEFT + 9 + c * (CELL_SIZE + 2);
-          const cy = BOARD_TOP + 9 + r * (CELL_SIZE + 2);
-          ctx.fillStyle = th.cellBg;
-          ctx.beginPath();
-          ctx.roundRect(cx, cy, CELL_SIZE, CELL_SIZE, 4);
-          ctx.fill();
+          const cx = B_LEFT + 9 + c * (CELL_SIZE + 2);
+          const cy = B_TOP + 9 + r * (CELL_SIZE + 2);
+          ctx.fillStyle = '#422a17';
+          ctx.fillRect(cx, cy, CELL_SIZE, CELL_SIZE);
 
           if (grid[r][c] === 1) {
-            draw3DBlock(cx, cy, CELL_SIZE);
+            drawBlock(cx, cy, CELL_SIZE);
           }
         }
       }
 
-      // 5. HOVER PREVIEW
+      // 4. HOVER PREVIEW
       if (dragging) {
         const coords = getGridCoords(dragging.x, dragging.y - 70, dragging.shape);
         if (coords && canFit(dragging.shape.m, coords.r, coords.c)) {
           for (let r = 0; r < dragging.shape.h; r++) {
             for (let c = 0; c < dragging.shape.w; c++) {
               if (dragging.shape.m[r][c]) {
-                const px = BOARD_LEFT + 9 + (coords.c + c) * (CELL_SIZE + 2);
-                const py = BOARD_TOP + 9 + (coords.r + r) * (CELL_SIZE + 2);
-                draw3DBlock(px, py, CELL_SIZE, 0.45);
+                const px = B_LEFT + 9 + (coords.c + c) * (CELL_SIZE + 2);
+                const py = B_TOP + 9 + (coords.r + r) * (CELL_SIZE + 2);
+                drawBlock(px, py, CELL_SIZE, 0.45);
               }
             }
           }
         }
       }
 
-      // 6. DOCK PIECES
-      const dockY = 560;
+      // 5. DOCK PIECES
+      const dockY = 550;
       const slotCenters = [75, 190, 305];
       for (let i = 0; i < 3; i++) {
         const shape = dock[i];
@@ -462,14 +288,14 @@
           for (let r = 0; r < shape.h; r++) {
             for (let c = 0; c < shape.w; c++) {
               if (shape.m[r][c]) {
-                draw3DBlock(startX + c * uSize, startY + r * uSize, uSize);
+                drawBlock(startX + c * uSize, startY + r * uSize, uSize);
               }
             }
           }
         }
       }
 
-      // 7. DRAGGING PIECE
+      // 6. DRAGGING PIECE
       if (dragging) {
         const uSize = CELL_SIZE;
         const dragX = dragging.x - (dragging.shape.w * uSize) / 2;
@@ -478,57 +304,32 @@
         for (let r = 0; r < dragging.shape.h; r++) {
           for (let c = 0; c < dragging.shape.w; c++) {
             if (dragging.shape.m[r][c]) {
-              draw3DBlock(dragX + c * (uSize + 2), dragY + r * (uSize + 2), uSize, 0.95);
+              drawBlock(dragX + c * (uSize + 2), dragY + r * (uSize + 2), uSize, 0.95);
             }
           }
         }
       }
 
-      // 8. COMBO MASCOT ANIMATION
-      if (mascotAnimation) {
-        ctx.save();
-        ctx.textAlign = 'center';
-        ctx.fillStyle = 'rgba(24, 18, 48, 0.85)';
-        ctx.strokeStyle = '#e879f9';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.roundRect(70, 240, 240, 160, 16);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.fillStyle = '#facc15';
-        ctx.font = '900 50px sans-serif';
-        ctx.fillText(mascotAnimation.text, 190, 335);
-
-        ctx.font = '54px sans-serif';
-        ctx.fillText('👾 👑 🐱', 190, 290);
-        ctx.restore();
-
-        mascotAnimation.life--;
-        if (mascotAnimation.life <= 0) mascotAnimation = null;
-      }
-
-      // 9. PARTICLES
+      // 7. PARTICLES
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         ctx.fillStyle = p.color;
         ctx.globalAlpha = p.alpha;
         ctx.fillRect(p.x, p.y, p.size, p.size);
-        p.x += p.vx; p.y += p.vy;
+        p.x += p.vx;
+        p.y += p.vy;
         p.alpha -= 0.035;
         if (p.alpha <= 0) particles.splice(i, 1);
       }
       ctx.globalAlpha = 1;
 
-      // 10. POPUPS
+      // 8. POPUPS
       for (let i = popups.length - 1; i >= 0; i--) {
         const pop = popups[i];
         ctx.save();
         ctx.fillStyle = pop.color;
         ctx.font = `900 ${pop.size}px sans-serif`;
         ctx.textAlign = 'center';
-        ctx.shadowColor = 'rgba(0,0,0,0.6)';
-        ctx.shadowBlur = 8;
         ctx.fillText(pop.text, pop.x, pop.y);
         ctx.restore();
 
@@ -538,9 +339,8 @@
       }
 
       ctx.restore();
-      requestAnimationFrame(render);
+      requestAnimationFrame(draw);
     }
-    requestAnimationFrame(render);
 
     // TOUCH HANDLERS
     function getPos(e) {
@@ -556,14 +356,13 @@
     window.addEventListener('pointerdown', (e) => {
       const { x, y } = getPos(e);
       const slotCenters = [75, 190, 305];
-      const dockY = 560;
+      const dockY = 550;
 
       for (let i = 0; i < 3; i++) {
         if (dock[i]) {
           const d = Math.hypot(x - slotCenters[i], y - dockY);
-          if (d < 55) {
+          if (d < 50) {
             dragging = { idx: i, shape: dock[i], x: x, y: y };
-            playBeep(450);
             break;
           }
         }
@@ -594,13 +393,17 @@
         }
 
         dock[dragging.idx] = null;
-        targetScore += placedCount * 10;
-        playBeep(320);
+        score += placedCount * 10;
+
+        if (score > highScore) {
+          highScore = score;
+          localStorage.setItem('bb_master_high', highScore);
+        }
 
         checkLineClears();
 
         if (dock.every(s => s === null)) {
-          spawnSmartDock();
+          spawnDock();
         } else {
           checkGameOver();
         }
@@ -611,8 +414,8 @@
 
     function getGridCoords(x, y, shape) {
       const cellW = CELL_SIZE + 2;
-      const startX = BOARD_LEFT + 9;
-      const startY = BOARD_TOP + 9;
+      const startX = B_LEFT + 9;
+      const startY = B_TOP + 9;
 
       const tlX = x - (shape.w * cellW) / 2;
       const tlY = y - (shape.h * cellW) / 2;
@@ -648,34 +451,15 @@
 
       if (totalLines > 0) {
         combo++;
-        const linePoints = totalLines * 120 + (combo > 1 ? combo * 110 : 0);
-        targetScore += linePoints;
-
-        if (targetScore > highScore) {
-          highScore = targetScore;
-          localStorage.setItem('bb_master_high', highScore);
-        }
+        const pts = totalLines * 120 + (combo > 1 ? combo * 100 : 0);
+        score += pts;
 
         popups.push({
           x: 190, y: 150,
-          text: `+${linePoints}`,
+          text: `+${pts}`,
           color: '#ffd166',
-          size: 30, life: 40
+          size: 28, life: 35
         });
-
-        if (combo >= 2 && currentTheme !== 'party_blue') {
-          switchTheme('party_blue');
-          mascotAnimation = { text: `x ${combo}`, life: 55 };
-        }
-
-        if (combo > 1) {
-          popups.push({
-            x: 190, y: 220,
-            text: `Combo ${combo}!`,
-            color: '#facc15',
-            size: 34, life: 50
-          });
-        }
 
         rClears.forEach(r => {
           grid[r].fill(0);
@@ -687,8 +471,32 @@
             spawnParticles(r, c);
           }
         });
-
-        playBeep(650, 0.25);
       } else {
         combo = 0;
-        if (curre
+      }
+    }
+
+    function spawnParticles(r, c) {
+      const cx = B_LEFT + 9 + c * (CELL_SIZE + 2) + CELL_SIZE / 2;
+      const cy = B_TOP + 9 + r * (CELL_SIZE + 2) + CELL_SIZE / 2;
+      for (let i = 0; i < 6; i++) {
+        particles.push({
+          x: cx, y: cy,
+          vx: (Math.random() - 0.5) * 6,
+          vy: (Math.random() - 0.5) * 6,
+          size: Math.random() * 4 + 3,
+          color: '#facc15',
+          alpha: 1
+        });
+      }
+    }
+
+    // INITIAL LAUNCH
+    window.onload = () => {
+      resize();
+      spawnDock();
+      requestAnimationFrame(draw);
+    };
+  </script>
+</body>
+</html>
