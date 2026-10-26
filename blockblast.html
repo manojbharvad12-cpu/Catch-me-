@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Block Blast Master</title>
+  <title>Block Blast Master Pro</title>
   <style>
     * {
       box-sizing: border-box;
@@ -23,14 +23,14 @@
       align-items: center;
       justify-content: center;
       overflow: hidden;
+      transition: background-color 0.8s ease;
     }
 
     #gameCanvas {
-      background: #b78860;
       display: block;
     }
 
-    /* MASSIVE CLEAR / GAME OVER SCREEN */
+    /* RESULT SCREEN */
     .result-screen {
       display: none;
       position: fixed;
@@ -52,13 +52,13 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
-      margin-bottom: 30px;
+      margin-bottom: 25px;
       text-align: center;
     }
 
     .score-card {
       text-align: center;
-      margin-bottom: 25px;
+      margin-bottom: 20px;
     }
 
     .score-lbl {
@@ -69,7 +69,7 @@
     }
 
     .score-val {
-      font-size: 48px;
+      font-size: 46px;
       font-weight: 900;
       color: #ffffff;
       margin-top: 2px;
@@ -77,7 +77,7 @@
     }
 
     .best-val {
-      font-size: 28px;
+      font-size: 26px;
       font-weight: 900;
       color: #ffd166;
       margin-top: 2px;
@@ -98,7 +98,7 @@
       gap: 10px;
       box-shadow: 0 8px 0 #14532d, 0 12px 25px rgba(0,0,0,0.5);
       cursor: pointer;
-      margin-top: 20px;
+      margin-top: 15px;
     }
 
     .btn-play-again:active {
@@ -111,7 +111,7 @@
 
   <canvas id="gameCanvas"></canvas>
 
-  <!-- RESULT SCREEN (Original Video Style) -->
+  <!-- RESULT SCREEN -->
   <div class="result-screen" id="resultScreen">
     <div class="result-title">Massive Clear</div>
 
@@ -126,7 +126,7 @@
     </div>
 
     <button class="btn-play-again" onclick="restartGame()">
-      <span>▶</span> Great!
+      <span>▶</span> Play Again
     </button>
   </div>
 
@@ -162,7 +162,7 @@
       } catch(e){}
     }
 
-    // BOARD CONFIG (Wood Theme matching Video)
+    // GAME CONFIG
     const BOARD_LEFT = 24;
     const BOARD_TOP = 155;
     const BOARD_SIZE = 332;
@@ -173,61 +173,83 @@
     let targetScore = 0;
     let highScore = parseInt(localStorage.getItem('bb_master_high')) || 239422;
     let combo = 0;
+    let streakCount = 0;
+    let currentTheme = 'wood'; // 'wood' athva 'party_blue'
+    let partyBulbTick = 0;
+
     let particles = [];
     let popups = [];
-    let boardFlash = 0;
+    let mascotAnimation = null; // { text, life }
 
-    // WOOD BLOCK COLORS (From Video)
-    const WOOD_COLOR = {
-      base: '#dfba6f',
-      top: '#f9e7a8',
-      bottom: '#a37c35',
-      shadow: '#6a4e21'
+    // THEME PALETTES
+    const THEMES = {
+      wood: {
+        bg: '#b78860',
+        boardFrame: '#5c3d24',
+        cellBg: '#422a17',
+        blockBase: '#dfba6f',
+        blockTop: '#f9e7a8',
+        blockBottom: '#a37c35'
+      },
+      party_blue: {
+        bg: '#253569',
+        boardFrame: '#1b2344',
+        cellBg: '#151c36',
+        blockBase: '#dfba6f', // Golden wood blocks on dark board
+        blockTop: '#f9e7a8',
+        blockBottom: '#a37c35'
+      }
     };
 
-    // ORIGINAL BLOCK BLAST SHAPES (Balanced - No 1x1 spam)
-    const REAL_SHAPES = [
-      // 1. Bars
-      { m: [[1,1,1]], w:3, h:1 },
-      { m: [[1],[1],[1]], w:1, h:3 },
-      { m: [[1,1,1,1]], w:4, h:1 },
-      { m: [[1],[1],[1],[1]], w:1, h:4 },
-      { m: [[1,1,1,1,1]], w:5, h:1 },
-      
-      // 2. Squares
-      { m: [[1,1],[1,1]], w:2, h:2 },
-      { m: [[1,1,1],[1,1,1],[1,1,1]], w:3, h:3 },
-      
-      // 3. Corners & L-Shapes
-      { m: [[1,0],[1,1]], w:2, h:2 },
-      { m: [[0,1],[1,1]], w:2, h:2 },
-      { m: [[1,1],[1,0]], w:2, h:2 },
-      { m: [[1,1],[0,1]], w:2, h:2 },
-      { m: [[1,0,0],[1,0,0],[1,1,1]], w:3, h:3 },
-      { m: [[0,0,1],[0,0,1],[1,1,1]], w:3, h:3 },
-      { m: [[1,1,1],[1,0,0],[1,0,0]], w:3, h:3 },
-      
-      // 4. T-Shapes & Z-Shapes
-      { m: [[1,1,1],[0,1,0]], w:3, h:2 },
-      { m: [[0,1,0],[1,1,1]], w:3, h:2 },
-      { m: [[1,1,0],[0,1,1]], w:3, h:2 },
-      
-      // 5. Small dominoes (rare)
-      { m: [[1,1]], w:2, h:1 },
-      { m: [[1],[1]], w:1, h:2 }
-    ];
+    // BALANCED BLOCK POOLS
+    const SHAPE_CATEGORIES = {
+      bars: [
+        { m: [[1,1,1]], w:3, h:1 },
+        { m: [[1],[1],[1]], w:1, h:3 },
+        { m: [[1,1,1,1]], w:4, h:1 },
+        { m: [[1],[1],[1],[1]], w:1, h:4 }
+      ],
+      squares: [
+        { m: [[1,1],[1,1]], w:2, h:2 },
+        { m: [[1,1,1],[1,1,1],[1,1,1]], w:3, h:3 }
+      ],
+      corners_L: [
+        { m: [[1,0],[1,1]], w:2, h:2 },
+        { m: [[0,1],[1,1]], w:2, h:2 },
+        { m: [[1,1],[1,0]], w:2, h:2 },
+        { m: [[1,1],[0,1]], w:2, h:2 },
+        { m: [[1,0,0],[1,0,0],[1,1,1]], w:3, h:3 },
+        { m: [[0,0,1],[0,0,1],[1,1,1]], w:3, h:3 }
+      ],
+      special: [
+        { m: [[1,1,1],[0,1,0]], w:3, h:2 },
+        { m: [[0,1,0],[1,1,1]], w:3, h:2 },
+        { m: [[1,1,0],[0,1,1]], w:3, h:2 }
+      ],
+      single_domino: [
+        { m: [[1,1]], w:2, h:1 },
+        { m: [[1],[1]], w:1, h:2 }
+      ]
+    };
 
     let dock = [null, null, null];
     let dragging = null;
 
-    // PROFESSIONAL SPAWN CONTROLLER (Addiction & Fair Logic)
-    function spawnBalancedDock() {
-      // Shuruat ma grid ma thoda random wood blocks muki devay (like original game)
-      for(let i=0; i<3; i++) {
-        // Pure balanced shapes
-        const rand = REAL_SHAPES[Math.floor(Math.random() * REAL_SHAPES.length)];
-        dock[i] = rand;
-      }
+    // SMART SHAPE ROTATOR: 3 blocks ma hamesha alag alag category na blocks aavse
+    function spawnSmartDock() {
+      // 1. Bar category mathi 1 piece
+      const c1 = SHAPE_CATEGORIES.bars;
+      // 2. Corner/L category mathi 1 piece
+      const c2 = SHAPE_CATEGORIES.corners_L;
+      // 3. Square/Special category mathi 1 piece
+      const c3 = Math.random() < 0.5 ? SHAPE_CATEGORIES.squares : SHAPE_CATEGORIES.special;
+
+      const p1 = c1[Math.floor(Math.random() * c1.length)];
+      const p2 = c2[Math.floor(Math.random() * c2.length)];
+      const p3 = c3[Math.floor(Math.random() * c3.length)];
+
+      const picked = [p1, p2, p3].sort(() => Math.random() - 0.5);
+      dock = [picked[0], picked[1], picked[2]];
 
       checkGameOver();
     }
@@ -270,22 +292,29 @@
       score = 0;
       targetScore = 0;
       combo = 0;
-      spawnBalancedDock();
+      streakCount = 0;
+      switchTheme('wood');
+      spawnSmartDock();
     }
 
-    // DRAW WOOD 3D BEVEL BLOCK
-    function drawWoodBlock(x, y, size, alpha = 1) {
+    function switchTheme(themeName) {
+      currentTheme = themeName;
+      document.body.style.backgroundColor = THEMES[themeName].bg;
+    }
+
+    // DRAW 3D BEVEL BLOCK
+    function draw3DBlock(x, y, size, alpha = 1) {
+      const th = THEMES[currentTheme];
       ctx.save();
       ctx.globalAlpha = alpha;
 
-      // Base
-      ctx.fillStyle = WOOD_COLOR.base;
+      ctx.fillStyle = th.blockBase;
       ctx.beginPath();
       ctx.roundRect(x, y, size, size, 4);
       ctx.fill();
 
       // Top Highlight Bevel
-      ctx.fillStyle = WOOD_COLOR.top;
+      ctx.fillStyle = th.blockTop;
       ctx.beginPath();
       ctx.moveTo(x, y); ctx.lineTo(x + size, y);
       ctx.lineTo(x + size - 4, y + 4); ctx.lineTo(x + 4, y + 4);
@@ -297,7 +326,7 @@
       ctx.closePath(); ctx.fill();
 
       // Bottom Dark Shadow Bevel
-      ctx.fillStyle = WOOD_COLOR.bottom;
+      ctx.fillStyle = th.blockBottom;
       ctx.beginPath();
       ctx.moveTo(x, y + size); ctx.lineTo(x + 4, y + size - 4);
       ctx.lineTo(x + size - 4, y + size - 4); ctx.lineTo(x + size, y + size);
@@ -308,26 +337,28 @@
       ctx.lineTo(x + size - 4, y + size - 4); ctx.lineTo(x + size - 4, y + 4);
       ctx.closePath(); ctx.fill();
 
-      // Center glossy inner inset
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+      // Glossy Center
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.28)';
       ctx.fillRect(x + 5, y + 5, size - 10, size - 10);
 
       ctx.restore();
     }
 
-    // MAIN 60FPS ENGINE
+    // 60FPS RENDERING ENGINE
     let diamondRot = 0;
     function render() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.save();
       ctx.scale(scale, scale);
 
-      // Smooth Rolling Score Animation
+      const th = THEMES[currentTheme];
+
+      // Smooth rolling score
       if(score < targetScore) {
         score += Math.ceil((targetScore - score) * 0.15);
       }
 
-      // 1. HEADER
+      // 1. TOP STATS
       ctx.fillStyle = '#ffd166';
       ctx.font = '900 20px sans-serif';
       ctx.textAlign = 'left';
@@ -337,7 +368,7 @@
       ctx.font = '22px sans-serif';
       ctx.fillText('⚙️', 332, 46);
 
-      // 2. ROTATING RAINBOW DIAMOND
+      // 2. DIAMOND ROTATION (RAINBOW)
       diamondRot += 0.02;
       const scoreX = 190;
       const scoreY = 96;
@@ -353,7 +384,7 @@
       ctx.fillRect(-20, -20, 40, 40);
       ctx.restore();
 
-      // 3. SCORE DISPLAY
+      // 3. SCORE TEXT
       const rainbowGrad = ctx.createLinearGradient(110, 0, 270, 0);
       rainbowGrad.addColorStop(0, '#4cc9f0');
       rainbowGrad.addColorStop(0.3, '#72efdd');
@@ -365,33 +396,50 @@
       ctx.textAlign = 'center';
       ctx.fillText(score, scoreX, 114);
 
-      // 4. BOARD FRAME (Wood Board)
-      ctx.fillStyle = '#5c3d24';
+      // 4. BOARD FRAME
+      ctx.fillStyle = th.boardFrame;
       ctx.beginPath();
       ctx.roundRect(BOARD_LEFT, BOARD_TOP, BOARD_SIZE, BOARD_SIZE, 12);
       ctx.fill();
+
+      // If in Party Blue mode: Draw Neon Glowing Bulb Border
+      if(currentTheme === 'party_blue') {
+        partyBulbTick += 0.08;
+        ctx.strokeStyle = '#c084fc';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(BOARD_LEFT - 3, BOARD_TOP - 3, BOARD_SIZE + 6, BOARD_SIZE + 6);
+
+        // Bulbs around board
+        const bulbCount = 16;
+        for(let i=0; i<bulbCount; i++) {
+          const t = (i / bulbCount) * (BOARD_SIZE * 4);
+          let bx = BOARD_LEFT, by = BOARD_TOP;
+          if(t < BOARD_SIZE) { bx += t; }
+          else if(t < BOARD_SIZE * 2) { bx += BOARD_SIZE; by += (t - BOARD_SIZE); }
+          else if(t < BOARD_SIZE * 3) { bx += (BOARD_SIZE * 3 - t); by += BOARD_SIZE; }
+          else { by += (BOARD_SIZE * 4 - t); }
+
+          ctx.fillStyle = Math.sin(partyBulbTick + i) > 0 ? '#4ade80' : '#facc15';
+          ctx.beginPath();
+          ctx.arc(bx, by, 4.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
 
       // Grid Cells
       for(let r=0; r<8; r++) {
         for(let c=0; c<8; c++) {
           const cx = BOARD_LEFT + 9 + c * (CELL_SIZE + 2);
           const cy = BOARD_TOP + 9 + r * (CELL_SIZE + 2);
-          ctx.fillStyle = '#422a17';
+          ctx.fillStyle = th.cellBg;
           ctx.beginPath();
           ctx.roundRect(cx, cy, CELL_SIZE, CELL_SIZE, 4);
           ctx.fill();
 
           if(grid[r][c] === 1) {
-            drawWoodBlock(cx, cy, CELL_SIZE);
+            draw3DBlock(cx, cy, CELL_SIZE);
           }
         }
-      }
-
-      // Board Wipe Flash Effect (When entire board is cleared!)
-      if(boardFlash > 0) {
-        ctx.fillStyle = `rgba(255, 255, 255, ${boardFlash})`;
-        ctx.fillRect(BOARD_LEFT, BOARD_TOP, BOARD_SIZE, BOARD_SIZE);
-        boardFlash -= 0.05;
       }
 
       // 5. HOVER PREVIEW
@@ -403,14 +451,14 @@
               if(dragging.shape.m[r][c]) {
                 const px = BOARD_LEFT + 9 + (coords.c + c) * (CELL_SIZE + 2);
                 const py = BOARD_TOP + 9 + (coords.r + r) * (CELL_SIZE + 2);
-                drawWoodBlock(px, py, CELL_SIZE, 0.45);
+                draw3DBlock(px, py, CELL_SIZE, 0.45);
               }
             }
           }
         }
       }
 
-      // 6. BOTTOM DOCK PIECES
+      // 6. DOCK PIECES
       const dockY = 560;
       const slotCenters = [75, 190, 305];
       for(let i=0; i<3; i++) {
@@ -423,14 +471,14 @@
           for(let r=0; r<shape.h; r++) {
             for(let c=0; c<shape.w; c++) {
               if(shape.m[r][c]) {
-                drawWoodBlock(startX + c * uSize, startY + r * uSize, uSize);
+                draw3DBlock(startX + c * uSize, startY + r * uSize, uSize);
               }
             }
           }
         }
       }
 
-      // 7. DRAGGING PIECE (Under Finger)
+      // 7. DRAGGING PIECE
       if(dragging) {
         const uSize = CELL_SIZE;
         const dragX = dragging.x - (dragging.shape.w * uSize) / 2;
@@ -439,13 +487,41 @@
         for(let r=0; r<dragging.shape.h; r++) {
           for(let c=0; c<dragging.shape.w; c++) {
             if(dragging.shape.m[r][c]) {
-              drawWoodBlock(dragX + c * (uSize + 2), dragY + r * (uSize + 2), uSize, 0.95);
+              draw3DBlock(dragX + c * (uSize + 2), dragY + r * (uSize + 2), uSize, 0.95);
             }
           }
         }
       }
 
-      // 8. BURST PARTICLES
+      // 8. COMBO MASCOT ANIMATION (Video 00:22 Dancing Character Burst)
+      if(mascotAnimation) {
+        ctx.save();
+        ctx.textAlign = 'center';
+        // Neon Card Behind Mascot
+        ctx.fillStyle = 'rgba(24, 18, 48, 0.85)';
+        ctx.strokeStyle = '#e879f9';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.roundRect(70, 240, 240, 160, 16);
+        ctx.fill();
+        ctx.stroke();
+
+        // Big X1 / X2 Mascot Text
+        ctx.fillStyle = '#facc15';
+        ctx.font = '900 50px sans-serif';
+        ctx.fillText(mascotAnimation.text, 190, 335);
+
+        // Mascot Emojis
+        ctx.font = '54px sans-serif';
+        ctx.fillText('👾 👑 🐱', 190, 290);
+
+        ctx.restore();
+
+        mascotAnimation.life--;
+        if(mascotAnimation.life <= 0) mascotAnimation = null;
+      }
+
+      // 9. PARTICLES
       for(let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         ctx.fillStyle = p.color;
@@ -457,7 +533,7 @@
       }
       ctx.globalAlpha = 1;
 
-      // 9. COMBO & SCORE POPUPS (+1380 / Combo Master)
+      // 10. POPUPS (+105, Combo 3!)
       for(let i = popups.length - 1; i >= 0; i--) {
         const pop = popups[i];
         ctx.save();
@@ -537,7 +613,7 @@
         checkLineClears();
 
         if(dock.every(s => s === null)) {
-          spawnBalancedDock();
+          spawnSmartDock();
         } else {
           checkGameOver();
         }
@@ -570,7 +646,7 @@
       return true;
     }
 
-    // LINE CLEARS & MASSIVE BOARD WIPE DETECTION
+    // LINE CLEARS, STREAKS & THEME SWITCHING
     function checkLineClears() {
       let rClears = [];
       let cClears = [];
@@ -586,7 +662,8 @@
 
       if(totalLines > 0) {
         combo++;
-        const linePoints = totalLines * 120 + (combo > 1 ? combo * 100 : 0);
+        streakCount++;
+        const linePoints = totalLines * 120 + (combo > 1 ? combo * 110 : 0);
         targetScore += linePoints;
 
         if(targetScore > highScore) {
@@ -594,7 +671,7 @@
           localStorage.setItem('bb_master_high', highScore);
         }
 
-        // Popup line points
+        // Floating points popup
         popups.push({
           x: 190, y: 150,
           text: `+${linePoints}`,
@@ -602,63 +679,12 @@
           size: 30, life: 40
         });
 
-        // Combo Title
+        // 🌟 DYNAMIC THEME SWITCH (Combo 2+ thay tyare Party Blue Mode chalu thase)
+        if(combo >= 2 && currentTheme !== 'party_blue') {
+          switchTheme('party_blue');
+          // Video 00:22 Combo Mascot Popup
+          mascotAnimation = { text: `x ${combo}`, life: 55 };
+        }
+
         if(combo > 1) {
           popups.push({
-            x: 190, y: 310,
-            text: `Combo Master x${combo}!`,
-            color: '#facc15',
-            size: 32, life: 50
-          });
-        }
-
-        rClears.forEach(r => {
-          grid[r].fill(0);
-          for(let c=0; c<8; c++) spawnParticles(r, c);
-        });
-        cClears.forEach(c => {
-          for(let r=0; r<8; r++) {
-            grid[r][c] = 0;
-            spawnParticles(r, c);
-          }
-        });
-
-        // MASSIVE BOARD WIPE CHECK (Jo Aakho Board Ek sathe Khali Thai Jaay)
-        const isBoardEmpty = grid.every(row => row.every(val => val === 0));
-        if(isBoardEmpty) {
-          boardFlash = 1.0; // Screen flash
-          targetScore += 1000;
-          popups.push({
-            x: 190, y: 250,
-            text: 'MASSIVE CLEAR! +1000',
-            color: '#38bdf8',
-            size: 32, life: 70
-          });
-        }
-
-        playBeep(650, 0.25);
-      } else {
-        combo = 0;
-      }
-    }
-
-    function spawnParticles(r, c) {
-      const cx = BOARD_LEFT + 9 + c * (CELL_SIZE + 2) + CELL_SIZE/2;
-      const cy = BOARD_TOP + 9 + r * (CELL_SIZE + 2) + CELL_SIZE/2;
-      for(let i=0; i<6; i++) {
-        particles.push({
-          x: cx, y: cy,
-          vx: (Math.random() - 0.5) * 7,
-          vy: (Math.random() - 0.5) * 7,
-          size: Math.random() * 4 + 3,
-          color: Math.random() < 0.5 ? '#facc15' : '#e2e8f0',
-          alpha: 1
-        });
-      }
-    }
-
-    // INIT
-    spawnBalancedDock();
-  </script>
-</body>
-</html>
