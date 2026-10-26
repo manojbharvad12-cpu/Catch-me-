@@ -23,11 +23,12 @@
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      transition: background-color 0.8s ease;
+      transition: background-color 0.5s ease;
     }
 
     #gameCanvas {
       display: block;
+      background: transparent;
     }
 
     /* RESULT SCREEN */
@@ -111,7 +112,6 @@
 
   <canvas id="gameCanvas"></canvas>
 
-  <!-- RESULT SCREEN -->
   <div class="result-screen" id="resultScreen">
     <div class="result-title">Massive Clear</div>
 
@@ -134,22 +134,45 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
+    // SAFE ROUNDRECT POLYFILL (Blank screen prevent karva mate)
+    if (!ctx.roundRect) {
+      ctx.roundRect = function(x, y, w, h, r) {
+        if (typeof r === 'undefined') r = 5;
+        this.beginPath();
+        this.moveTo(x + r, y);
+        this.lineTo(x + w - r, y);
+        this.quadraticCurveTo(x + w, y, x + w, y + r);
+        this.lineTo(x + w, y + h - r);
+        this.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        this.lineTo(x + r, y + h);
+        this.quadraticCurveTo(x, y + h, x, y + h - r);
+        this.lineTo(x, y + r);
+        this.quadraticCurveTo(x, y, x + r, y);
+        this.closePath();
+        return this;
+      };
+    }
+
     const VIEW_W = 380;
     const VIEW_H = 760;
     let scale = 1;
 
     function resize() {
-      scale = Math.min(window.innerWidth / VIEW_W, window.innerHeight / VIEW_H);
+      const w = window.innerWidth || 380;
+      const h = window.innerHeight || 760;
+      scale = Math.min(w / VIEW_W, h / VIEW_H);
       canvas.width = VIEW_W * scale;
       canvas.height = VIEW_H * scale;
     }
     window.addEventListener('resize', resize);
     resize();
 
-    // AUDIO
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // SAFE AUDIO (Pehla touch par initialize thase, script block nahi kare)
+    let audioCtx = null;
     function playBeep(freq, dur = 0.08) {
       try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator();
         const g = audioCtx.createGain();
         osc.frequency.value = freq;
@@ -173,15 +196,13 @@
     let targetScore = 0;
     let highScore = parseInt(localStorage.getItem('bb_master_high')) || 239422;
     let combo = 0;
-    let streakCount = 0;
-    let currentTheme = 'wood'; // 'wood' athva 'party_blue'
+    let currentTheme = 'wood';
     let partyBulbTick = 0;
 
     let particles = [];
     let popups = [];
-    let mascotAnimation = null; // { text, life }
+    let mascotAnimation = null;
 
-    // THEME PALETTES
     const THEMES = {
       wood: {
         bg: '#b78860',
@@ -195,85 +216,59 @@
         bg: '#253569',
         boardFrame: '#1b2344',
         cellBg: '#151c36',
-        blockBase: '#dfba6f', // Golden wood blocks on dark board
+        blockBase: '#dfba6f',
         blockTop: '#f9e7a8',
         blockBottom: '#a37c35'
       }
     };
 
-    // BALANCED BLOCK POOLS
-    const SHAPE_CATEGORIES = {
-      bars: [
-        { m: [[1,1,1]], w:3, h:1 },
-        { m: [[1],[1],[1]], w:1, h:3 },
-        { m: [[1,1,1,1]], w:4, h:1 },
-        { m: [[1],[1],[1],[1]], w:1, h:4 }
-      ],
-      squares: [
-        { m: [[1,1],[1,1]], w:2, h:2 },
-        { m: [[1,1,1],[1,1,1],[1,1,1]], w:3, h:3 }
-      ],
-      corners_L: [
-        { m: [[1,0],[1,1]], w:2, h:2 },
-        { m: [[0,1],[1,1]], w:2, h:2 },
-        { m: [[1,1],[1,0]], w:2, h:2 },
-        { m: [[1,1],[0,1]], w:2, h:2 },
-        { m: [[1,0,0],[1,0,0],[1,1,1]], w:3, h:3 },
-        { m: [[0,0,1],[0,0,1],[1,1,1]], w:3, h:3 }
-      ],
-      special: [
-        { m: [[1,1,1],[0,1,0]], w:3, h:2 },
-        { m: [[0,1,0],[1,1,1]], w:3, h:2 },
-        { m: [[1,1,0],[0,1,1]], w:3, h:2 }
-      ],
-      single_domino: [
-        { m: [[1,1]], w:2, h:1 },
-        { m: [[1],[1]], w:1, h:2 }
-      ]
-    };
+    const REAL_SHAPES = [
+      { m: [[1,1,1]], w:3, h:1 },
+      { m: [[1],[1],[1]], w:1, h:3 },
+      { m: [[1,1,1,1]], w:4, h:1 },
+      { m: [[1],[1],[1],[1]], w:1, h:4 },
+      { m: [[1,1],[1,1]], w:2, h:2 },
+      { m: [[1,1,1],[1,1,1],[1,1,1]], w:3, h:3 },
+      { m: [[1,0],[1,1]], w:2, h:2 },
+      { m: [[0,1],[1,1]], w:2, h:2 },
+      { m: [[1,1],[1,0]], w:2, h:2 },
+      { m: [[1,1],[0,1]], w:2, h:2 },
+      { m: [[1,0,0],[1,0,0],[1,1,1]], w:3, h:3 },
+      { m: [[1,1,1],[0,1,0]], w:3, h:2 },
+      { m: [[1,1]], w:2, h:1 },
+      { m: [[1],[1]], w:1, h:2 }
+    ];
 
     let dock = [null, null, null];
     let dragging = null;
 
-    // SMART SHAPE ROTATOR: 3 blocks ma hamesha alag alag category na blocks aavse
     function spawnSmartDock() {
-      // 1. Bar category mathi 1 piece
-      const c1 = SHAPE_CATEGORIES.bars;
-      // 2. Corner/L category mathi 1 piece
-      const c2 = SHAPE_CATEGORIES.corners_L;
-      // 3. Square/Special category mathi 1 piece
-      const c3 = Math.random() < 0.5 ? SHAPE_CATEGORIES.squares : SHAPE_CATEGORIES.special;
-
-      const p1 = c1[Math.floor(Math.random() * c1.length)];
-      const p2 = c2[Math.floor(Math.random() * c2.length)];
-      const p3 = c3[Math.floor(Math.random() * c3.length)];
-
-      const picked = [p1, p2, p3].sort(() => Math.random() - 0.5);
-      dock = [picked[0], picked[1], picked[2]];
-
+      for (let i = 0; i < 3; i++) {
+        dock[i] = REAL_SHAPES[Math.floor(Math.random() * REAL_SHAPES.length)];
+      }
       checkGameOver();
     }
 
     function checkGameOver() {
       const remaining = dock.filter(s => s !== null);
-      if(remaining.length === 0) return;
+      if (remaining.length === 0) return;
 
       let canPlaceAny = false;
-      for(let shape of remaining) {
-        for(let r=0; r<=8-shape.h; r++) {
-          for(let c=0; c<=8-shape.w; c++) {
-            if(canFit(shape.m, r, c)) {
+      for (let shape of remaining) {
+        for (let r = 0; r <= 8 - shape.h; r++) {
+          for (let c = 0; c <= 8 - shape.w; c++) {
+            if (canFit(shape.m, r, c)) {
               canPlaceAny = true;
               break;
             }
           }
-          if(canPlaceAny) break;
+          if (canPlaceAny) break;
         }
-        if(canPlaceAny) break;
+        if (canPlaceAny) break;
       }
 
-      if(!canPlaceAny) {
-        if(score > highScore) {
+      if (!canPlaceAny) {
+        if (score > highScore) {
           highScore = score;
           localStorage.setItem('bb_master_high', highScore);
         }
@@ -292,7 +287,6 @@
       score = 0;
       targetScore = 0;
       combo = 0;
-      streakCount = 0;
       switchTheme('wood');
       spawnSmartDock();
     }
@@ -337,7 +331,7 @@
       ctx.lineTo(x + size - 4, y + size - 4); ctx.lineTo(x + size - 4, y + 4);
       ctx.closePath(); ctx.fill();
 
-      // Glossy Center
+      // Center Shine
       ctx.fillStyle = 'rgba(255, 255, 255, 0.28)';
       ctx.fillRect(x + 5, y + 5, size - 10, size - 10);
 
@@ -353,8 +347,7 @@
 
       const th = THEMES[currentTheme];
 
-      // Smooth rolling score
-      if(score < targetScore) {
+      if (score < targetScore) {
         score += Math.ceil((targetScore - score) * 0.15);
       }
 
@@ -402,21 +395,19 @@
       ctx.roundRect(BOARD_LEFT, BOARD_TOP, BOARD_SIZE, BOARD_SIZE, 12);
       ctx.fill();
 
-      // If in Party Blue mode: Draw Neon Glowing Bulb Border
-      if(currentTheme === 'party_blue') {
+      if (currentTheme === 'party_blue') {
         partyBulbTick += 0.08;
         ctx.strokeStyle = '#c084fc';
         ctx.lineWidth = 4;
         ctx.strokeRect(BOARD_LEFT - 3, BOARD_TOP - 3, BOARD_SIZE + 6, BOARD_SIZE + 6);
 
-        // Bulbs around board
         const bulbCount = 16;
-        for(let i=0; i<bulbCount; i++) {
+        for (let i = 0; i < bulbCount; i++) {
           const t = (i / bulbCount) * (BOARD_SIZE * 4);
           let bx = BOARD_LEFT, by = BOARD_TOP;
-          if(t < BOARD_SIZE) { bx += t; }
-          else if(t < BOARD_SIZE * 2) { bx += BOARD_SIZE; by += (t - BOARD_SIZE); }
-          else if(t < BOARD_SIZE * 3) { bx += (BOARD_SIZE * 3 - t); by += BOARD_SIZE; }
+          if (t < BOARD_SIZE) { bx += t; }
+          else if (t < BOARD_SIZE * 2) { bx += BOARD_SIZE; by += (t - BOARD_SIZE); }
+          else if (t < BOARD_SIZE * 3) { bx += (BOARD_SIZE * 3 - t); by += BOARD_SIZE; }
           else { by += (BOARD_SIZE * 4 - t); }
 
           ctx.fillStyle = Math.sin(partyBulbTick + i) > 0 ? '#4ade80' : '#facc15';
@@ -427,8 +418,8 @@
       }
 
       // Grid Cells
-      for(let r=0; r<8; r++) {
-        for(let c=0; c<8; c++) {
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
           const cx = BOARD_LEFT + 9 + c * (CELL_SIZE + 2);
           const cy = BOARD_TOP + 9 + r * (CELL_SIZE + 2);
           ctx.fillStyle = th.cellBg;
@@ -436,19 +427,19 @@
           ctx.roundRect(cx, cy, CELL_SIZE, CELL_SIZE, 4);
           ctx.fill();
 
-          if(grid[r][c] === 1) {
+          if (grid[r][c] === 1) {
             draw3DBlock(cx, cy, CELL_SIZE);
           }
         }
       }
 
       // 5. HOVER PREVIEW
-      if(dragging) {
+      if (dragging) {
         const coords = getGridCoords(dragging.x, dragging.y - 70, dragging.shape);
-        if(coords && canFit(dragging.shape.m, coords.r, coords.c)) {
-          for(let r=0; r<dragging.shape.h; r++) {
-            for(let c=0; c<dragging.shape.w; c++) {
-              if(dragging.shape.m[r][c]) {
+        if (coords && canFit(dragging.shape.m, coords.r, coords.c)) {
+          for (let r = 0; r < dragging.shape.h; r++) {
+            for (let c = 0; c < dragging.shape.w; c++) {
+              if (dragging.shape.m[r][c]) {
                 const px = BOARD_LEFT + 9 + (coords.c + c) * (CELL_SIZE + 2);
                 const py = BOARD_TOP + 9 + (coords.r + r) * (CELL_SIZE + 2);
                 draw3DBlock(px, py, CELL_SIZE, 0.45);
@@ -461,16 +452,16 @@
       // 6. DOCK PIECES
       const dockY = 560;
       const slotCenters = [75, 190, 305];
-      for(let i=0; i<3; i++) {
+      for (let i = 0; i < 3; i++) {
         const shape = dock[i];
-        if(shape && (!dragging || dragging.idx !== i)) {
+        if (shape && (!dragging || dragging.idx !== i)) {
           const uSize = 20;
           const startX = slotCenters[i] - (shape.w * uSize) / 2;
           const startY = dockY - (shape.h * uSize) / 2;
 
-          for(let r=0; r<shape.h; r++) {
-            for(let c=0; c<shape.w; c++) {
-              if(shape.m[r][c]) {
+          for (let r = 0; r < shape.h; r++) {
+            for (let c = 0; c < shape.w; c++) {
+              if (shape.m[r][c]) {
                 draw3DBlock(startX + c * uSize, startY + r * uSize, uSize);
               }
             }
@@ -479,25 +470,24 @@
       }
 
       // 7. DRAGGING PIECE
-      if(dragging) {
+      if (dragging) {
         const uSize = CELL_SIZE;
         const dragX = dragging.x - (dragging.shape.w * uSize) / 2;
         const dragY = (dragging.y - 70) - (dragging.shape.h * uSize) / 2;
 
-        for(let r=0; r<dragging.shape.h; r++) {
-          for(let c=0; c<dragging.shape.w; c++) {
-            if(dragging.shape.m[r][c]) {
+        for (let r = 0; r < dragging.shape.h; r++) {
+          for (let c = 0; c < dragging.shape.w; c++) {
+            if (dragging.shape.m[r][c]) {
               draw3DBlock(dragX + c * (uSize + 2), dragY + r * (uSize + 2), uSize, 0.95);
             }
           }
         }
       }
 
-      // 8. COMBO MASCOT ANIMATION (Video 00:22 Dancing Character Burst)
-      if(mascotAnimation) {
+      // 8. COMBO MASCOT ANIMATION
+      if (mascotAnimation) {
         ctx.save();
         ctx.textAlign = 'center';
-        // Neon Card Behind Mascot
         ctx.fillStyle = 'rgba(24, 18, 48, 0.85)';
         ctx.strokeStyle = '#e879f9';
         ctx.lineWidth = 3;
@@ -506,35 +496,32 @@
         ctx.fill();
         ctx.stroke();
 
-        // Big X1 / X2 Mascot Text
         ctx.fillStyle = '#facc15';
         ctx.font = '900 50px sans-serif';
         ctx.fillText(mascotAnimation.text, 190, 335);
 
-        // Mascot Emojis
         ctx.font = '54px sans-serif';
         ctx.fillText('👾 👑 🐱', 190, 290);
-
         ctx.restore();
 
         mascotAnimation.life--;
-        if(mascotAnimation.life <= 0) mascotAnimation = null;
+        if (mascotAnimation.life <= 0) mascotAnimation = null;
       }
 
       // 9. PARTICLES
-      for(let i = particles.length - 1; i >= 0; i--) {
+      for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         ctx.fillStyle = p.color;
         ctx.globalAlpha = p.alpha;
         ctx.fillRect(p.x, p.y, p.size, p.size);
         p.x += p.vx; p.y += p.vy;
         p.alpha -= 0.035;
-        if(p.alpha <= 0) particles.splice(i, 1);
+        if (p.alpha <= 0) particles.splice(i, 1);
       }
       ctx.globalAlpha = 1;
 
-      // 10. POPUPS (+105, Combo 3!)
-      for(let i = popups.length - 1; i >= 0; i--) {
+      // 10. POPUPS
+      for (let i = popups.length - 1; i >= 0; i--) {
         const pop = popups[i];
         ctx.save();
         ctx.fillStyle = pop.color;
@@ -547,7 +534,7 @@
 
         pop.y -= 1.2;
         pop.life--;
-        if(pop.life <= 0) popups.splice(i, 1);
+        if (pop.life <= 0) popups.splice(i, 1);
       }
 
       ctx.restore();
@@ -571,10 +558,10 @@
       const slotCenters = [75, 190, 305];
       const dockY = 560;
 
-      for(let i=0; i<3; i++) {
-        if(dock[i]) {
+      for (let i = 0; i < 3; i++) {
+        if (dock[i]) {
           const d = Math.hypot(x - slotCenters[i], y - dockY);
-          if(d < 55) {
+          if (d < 55) {
             dragging = { idx: i, shape: dock[i], x: x, y: y };
             playBeep(450);
             break;
@@ -584,22 +571,22 @@
     });
 
     window.addEventListener('pointermove', (e) => {
-      if(!dragging) return;
+      if (!dragging) return;
       const { x, y } = getPos(e);
       dragging.x = x;
       dragging.y = y;
     });
 
     window.addEventListener('pointerup', () => {
-      if(!dragging) return;
+      if (!dragging) return;
       const targetY = dragging.y - 70;
       const coords = getGridCoords(dragging.x, targetY, dragging.shape);
 
-      if(coords && canFit(dragging.shape.m, coords.r, coords.c)) {
+      if (coords && canFit(dragging.shape.m, coords.r, coords.c)) {
         let placedCount = 0;
-        for(let r=0; r<dragging.shape.h; r++) {
-          for(let c=0; c<dragging.shape.w; c++) {
-            if(dragging.shape.m[r][c]) {
+        for (let r = 0; r < dragging.shape.h; r++) {
+          for (let c = 0; c < dragging.shape.w; c++) {
+            if (dragging.shape.m[r][c]) {
               grid[coords.r + r][coords.c + c] = 1;
               placedCount++;
             }
@@ -612,7 +599,7 @@
 
         checkLineClears();
 
-        if(dock.every(s => s === null)) {
+        if (dock.every(s => s === null)) {
           spawnSmartDock();
         } else {
           checkGameOver();
@@ -637,41 +624,38 @@
     }
 
     function canFit(m, r, c) {
-      if(r < 0 || c < 0 || r + m.length > 8 || c + m[0].length > 8) return false;
-      for(let i=0; i<m.length; i++) {
-        for(let j=0; j<m[0].length; j++) {
-          if(m[i][j] && grid[r+i][c+j] === 1) return false;
+      if (r < 0 || c < 0 || r + m.length > 8 || c + m[0].length > 8) return false;
+      for (let i = 0; i < m.length; i++) {
+        for (let j = 0; j < m[0].length; j++) {
+          if (m[i][j] && grid[r + i][c + j] === 1) return false;
         }
       }
       return true;
     }
 
-    // LINE CLEARS, STREAKS & THEME SWITCHING
     function checkLineClears() {
       let rClears = [];
       let cClears = [];
 
-      for(let r=0; r<8; r++) if(grid[r].every(v => v === 1)) rClears.push(r);
-      for(let c=0; c<8; c++) {
+      for (let r = 0; r < 8; r++) if (grid[r].every(v => v === 1)) rClears.push(r);
+      for (let c = 0; c < 8; c++) {
         let full = true;
-        for(let r=0; r<8; r++) if(grid[r][c] === 0) { full = false; break; }
-        if(full) cClears.push(c);
+        for (let r = 0; r < 8; r++) if (grid[r][c] === 0) { full = false; break; }
+        if (full) cClears.push(c);
       }
 
       const totalLines = rClears.length + cClears.length;
 
-      if(totalLines > 0) {
+      if (totalLines > 0) {
         combo++;
-        streakCount++;
         const linePoints = totalLines * 120 + (combo > 1 ? combo * 110 : 0);
         targetScore += linePoints;
 
-        if(targetScore > highScore) {
+        if (targetScore > highScore) {
           highScore = targetScore;
           localStorage.setItem('bb_master_high', highScore);
         }
 
-        // Floating points popup
         popups.push({
           x: 190, y: 150,
           text: `+${linePoints}`,
@@ -679,12 +663,32 @@
           size: 30, life: 40
         });
 
-        // 🌟 DYNAMIC THEME SWITCH (Combo 2+ thay tyare Party Blue Mode chalu thase)
-        if(combo >= 2 && currentTheme !== 'party_blue') {
+        if (combo >= 2 && currentTheme !== 'party_blue') {
           switchTheme('party_blue');
-          // Video 00:22 Combo Mascot Popup
           mascotAnimation = { text: `x ${combo}`, life: 55 };
         }
 
-        if(combo > 1) {
+        if (combo > 1) {
           popups.push({
+            x: 190, y: 220,
+            text: `Combo ${combo}!`,
+            color: '#facc15',
+            size: 34, life: 50
+          });
+        }
+
+        rClears.forEach(r => {
+          grid[r].fill(0);
+          for (let c = 0; c < 8; c++) spawnParticles(r, c);
+        });
+        cClears.forEach(c => {
+          for (let r = 0; r < 8; r++) {
+            grid[r][c] = 0;
+            spawnParticles(r, c);
+          }
+        });
+
+        playBeep(650, 0.25);
+      } else {
+        combo = 0;
+        if (curre
